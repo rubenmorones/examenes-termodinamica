@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Reset Examen</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <div class="logo">
+                <h1>🔄 Reset Examen</h1>
+                <p>Borra todos los datos de una matrícula</p>
+            </div>
+
+            <div class="form-group">
+                <label for="matricula">Matrícula a resetear</label>
+                <input type="text" id="matricula" value="1111111" maxlength="7">
+                <small>Esto borra: timer, respuestas, probatorios y registros</small>
+            </div>
+
+            <button id="btnReset" class="btn btn-primary" onclick="resetearTodo()">
+                🗑️ Resetear todo
+            </button>
+
+            <div id="log" style="margin-top:20px;font-size:0.85em;font-family:monospace;color:#999;"></div>
+
+            <hr>
+            <a href="index.html" class="btn btn-secondary" style="text-align:center;display:block;text-decoration:none;">
+                ← Volver al login
+            </a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+
+    <script>
+        function log(msg) {
+            const div = document.getElementById('log');
+            div.innerHTML += msg + '<br>';
+            console.log(msg);
+        }
+
+        async function resetearTodo() {
+            const matricula = document.getElementById('matricula').value.trim();
+            if (!matricula) {
+                alert('Ingresa una matrícula');
+                return;
+            }
+
+            if (!confirm('¿Confirmas borrar TODOS los datos de la matrícula ' + matricula + '?')) return;
+
+            document.getElementById('btnReset').disabled = true;
+            document.getElementById('log').innerHTML = '';
+
+            log('🔄 Iniciando reset para matrícula: ' + matricula);
+
+            // 1) Limpiar localStorage
+            try {
+                const claves = ['matriculaActual', 'respuestasExamen', 'respuestasTeoriaLocal',
+                               'tiempoInicioExamen_' + matricula, 'matriculaProblemas111111',
+                               'matriculaProblemas1111111', 'fase'];
+                claves.forEach(c => localStorage.removeItem(c));
+                log('✓ localStorage limpiado');
+            } catch (err) {
+                log('⚠️ localStorage: ' + err.message);
+            }
+
+            // 2) Borrar respuestas de problemas
+            try {
+                const { error } = await supabaseClient.from('respuestas').delete().eq('matricula', matricula);
+                if (error) throw error;
+                log('✓ Tabla "respuestas" limpiada');
+            } catch (err) {
+                log('⚠️ respuestas: ' + err.message);
+            }
+
+            // 3) Borrar respuestas de teoría
+            try {
+                const { error } = await supabaseClient.from('respuestas_teoria').delete().eq('matricula', matricula);
+                if (error) throw error;
+                log('✓ Tabla "respuestas_teoria" limpiada');
+            } catch (err) {
+                log('⚠️ respuestas_teoria: ' + err.message);
+            }
+
+            // 4) Borrar archivos del Storage
+            try {
+                const { data: archivos } = await supabaseClient.storage.from('probatorios').list();
+                if (archivos && archivos.length > 0) {
+                    const archivosDeMatricula = archivos
+                        .filter(f => f.name.startsWith(matricula + '-'))
+                        .map(f => f.name);
+                    if (archivosDeMatricula.length > 0) {
+                        const { error } = await supabaseClient.storage.from('probatorios').remove(archivosDeMatricula);
+                        if (error) throw error;
+                        log('✓ ' + archivosDeMatricula.length + ' archivos borrados del Storage');
+                    } else {
+                        log('✓ No había archivos para borrar');
+                    }
+                } else {
+                    log('✓ Storage vacío');
+                }
+            } catch (err) {
+                log('⚠️ Storage: ' + err.message);
+            }
+
+            // 5) Borrar registros de probatorios
+            try {
+                const { error } = await supabaseClient.from('probatorios').delete().eq('matricula', matricula);
+                if (error) throw error;
+                log('✓ Tabla "probatorios" limpiada');
+            } catch (err) {
+                log('⚠️ probatorios: ' + err.message);
+            }
+
+            // 6) Borrar estudiante
+            try {
+                const { error } = await supabaseClient.from('estudiantes').delete().eq('matricula', matricula);
+                if (error) throw error;
+                log('✓ Estudiante eliminado');
+            } catch (err) {
+                log('⚠️ estudiantes: ' + err.message);
+            }
+
+            log('');
+            log('✅ Reset completo para ' + matricula);
+            log('Ya puedes volver al login y hacer un examen nuevo');
+
+            document.getElementById('btnReset').disabled = false;
+        }
+    </script>
+</body>
+</html>
