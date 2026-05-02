@@ -69,6 +69,7 @@
             <button onclick="cambiarTab(event,'calificaciones')">🎯 Calificaciones</button>
             <button onclick="cambiarTab(event,'tiempo')">⏱️ Extender Tiempo</button>
             <button onclick="cambiarTab(event,'descargar')">📥 Descargar Excel</button>
+            <button onclick="cambiarTab(event,'reset')">🗑️ Reset Alumno</button>
         </div>
 
         <!-- TAB: Progreso en Vivo -->
@@ -142,6 +143,19 @@
                     <tbody id="tablaTiempos"></tbody>
                 </table>
             </div>
+        </section>
+
+        <!-- TAB: Reset Alumno -->
+        <section id="tab-reset" class="panel-section">
+            <h3>🗑️ Resetear datos de un alumno</h3>
+            <p style="color:#ff9800;font-size:0.9em;">⚠️ Esta acción borra TODOS los datos de la matrícula: timer, respuestas, probatorios y registros. No se puede deshacer.</p>
+            <div class="form-grid">
+                <input type="text" id="matriculaReset" placeholder="Matrícula a resetear (ej: 1111111)" maxlength="7">
+                <button class="btn btn-red" onclick="resetearAlumno()" style="background:#e74c3c;color:white;">
+                    🗑️ Resetear todo
+                </button>
+            </div>
+            <div id="logReset" style="margin-top:1rem;font-size:0.85em;font-family:monospace;color:#aaa;background:rgba(0,0,0,0.3);padding:1rem;border-radius:8px;min-height:50px;"></div>
         </section>
 
         <!-- TAB: Descargar -->
@@ -491,6 +505,105 @@
             a.download = 'respuestas_' + new Date().toISOString().split('T')[0] + '.json';
             a.click();
             URL.revokeObjectURL(url);
+        }
+
+        // ============================================================
+        // RESET DE ALUMNO
+        // ============================================================
+        function logReset(msg) {
+            const div = document.getElementById('logReset');
+            div.innerHTML += msg + '<br>';
+            console.log(msg);
+        }
+
+        async function resetearAlumno() {
+            const matricula = document.getElementById('matriculaReset').value.trim();
+            if (!matricula) {
+                alert('Ingresa una matrícula');
+                return;
+            }
+            if (!/^\d{7}$/.test(matricula)) {
+                alert('La matrícula debe tener 7 dígitos');
+                return;
+            }
+            if (!confirm('⚠️ ¿Confirmas borrar TODOS los datos de la matrícula ' + matricula + '?\n\nEsto NO se puede deshacer.')) return;
+
+            document.getElementById('logReset').innerHTML = '';
+            logReset('🔄 Iniciando reset para matrícula: ' + matricula);
+
+            // 1) Limpiar localStorage (solo si es la misma sesión actual)
+            try {
+                const claves = ['matriculaActual', 'respuestasExamen', 'respuestasTeoriaLocal',
+                               'tiempoInicioExamen_' + matricula, 'fase'];
+                claves.forEach(c => localStorage.removeItem(c));
+                logReset('✓ localStorage limpiado (sesión actual)');
+            } catch (err) {
+                logReset('⚠️ localStorage: ' + err.message);
+            }
+
+            // 2) Borrar respuestas de problemas
+            try {
+                const { error } = await supabaseClient.from('respuestas').delete().eq('matricula', matricula);
+                if (error) throw error;
+                logReset('✓ Tabla "respuestas" limpiada');
+            } catch (err) {
+                logReset('⚠️ respuestas: ' + err.message);
+            }
+
+            // 3) Borrar respuestas de teoría
+            try {
+                const { error } = await supabaseClient.from('respuestas_teoria').delete().eq('matricula', matricula);
+                if (error) throw error;
+                logReset('✓ Tabla "respuestas_teoria" limpiada');
+            } catch (err) {
+                logReset('⚠️ respuestas_teoria: ' + err.message);
+            }
+
+            // 4) Borrar archivos del Storage
+            try {
+                const { data: archivos } = await supabaseClient.storage.from('probatorios').list();
+                if (archivos && archivos.length > 0) {
+                    const archivosDeMatricula = archivos
+                        .filter(f => f.name.startsWith(matricula + '-'))
+                        .map(f => f.name);
+                    if (archivosDeMatricula.length > 0) {
+                        const { error } = await supabaseClient.storage.from('probatorios').remove(archivosDeMatricula);
+                        if (error) throw error;
+                        logReset('✓ ' + archivosDeMatricula.length + ' archivos borrados del Storage');
+                    } else {
+                        logReset('✓ No había archivos para borrar');
+                    }
+                } else {
+                    logReset('✓ Storage vacío');
+                }
+            } catch (err) {
+                logReset('⚠️ Storage: ' + err.message);
+            }
+
+            // 5) Borrar registros de probatorios
+            try {
+                const { error } = await supabaseClient.from('probatorios').delete().eq('matricula', matricula);
+                if (error) throw error;
+                logReset('✓ Tabla "probatorios" limpiada');
+            } catch (err) {
+                logReset('⚠️ probatorios: ' + err.message);
+            }
+
+            // 6) Borrar estudiante
+            try {
+                const { error } = await supabaseClient.from('estudiantes').delete().eq('matricula', matricula);
+                if (error) throw error;
+                logReset('✓ Estudiante eliminado');
+            } catch (err) {
+                logReset('⚠️ estudiantes: ' + err.message);
+            }
+
+            logReset('');
+            logReset('✅ Reset completo para ' + matricula);
+            logReset('El alumno puede volver a entrar y empezar un examen nuevo.');
+
+            // Refrescar tablas del panel
+            cargarTodo();
         }
     </script>
 </body>
