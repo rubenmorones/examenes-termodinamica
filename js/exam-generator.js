@@ -165,6 +165,7 @@ function construirPreguntasFase2(matricula, problemasFallidos) {
   });
 
   // 3 preguntas diagnósticas por cada problema fallido
+  // (NO se etiquetan como diagnósticas para que el alumno no sepa cuáles falló)
   problemasFallidos.forEach(numProblema => {
     const diags = window.preguntasDiagnosticas[numProblema] || [];
     diags.forEach((d, i) => {
@@ -172,12 +173,21 @@ function construirPreguntasFase2(matricula, problemasFallidos) {
         tipo: 'diagnostica',
         problema: numProblema,
         numero: lista.length + 1,
-        pregunta: '[Diagnóstica P' + numProblema + '] ' + d.pregunta,
+        pregunta: d.pregunta, // sin prefijo
         opciones: d.opciones,
         correcta: d.correcta
       });
     });
   });
+
+  // Mezclar (shuffle) la lista para que las diagnósticas estén intercaladas con las de teoría
+  // Usamos un seed basado en la matrícula para mantener orden reproducible
+  const seed = parseInt(matricula);
+  const random = (i) => { const x = Math.sin(seed * (i + 1) + Math.E) * 10000; return x - Math.floor(x); };
+  for (let i = lista.length - 1; i > 0; i--) {
+    const j = Math.floor(random(i) * (i + 1));
+    [lista[i], lista[j]] = [lista[j], lista[i]];
+  }
 
   return lista;
 }
