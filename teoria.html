@@ -144,9 +144,7 @@
             }
         }
 
-        // Preguntas de teoría - se cargarán del examen real
-        let preguntasTeoria = {};
-        let preguntasDiagnosticas = {};
+        // (Las variables preguntasTeoria y preguntasDiagnosticas vienen de los scripts externos)
 
         // Inicialización
         window.addEventListener('load', function() {
@@ -288,6 +286,17 @@
 
             // Obtener pregunta del listado real
             const pregunta = listaPreguntas[numero - 1];
+            console.log('🔍 mostrarPregunta(' + numero + '):', pregunta);
+
+            if (!pregunta) {
+                document.getElementById('preguntaContent').innerHTML =
+                    '<div style="padding:2rem;background:#5b1f1f;border-radius:12px;color:#ffb3b3;">' +
+                    '<h3>⚠️ Error cargando pregunta ' + numero + '</h3>' +
+                    '<p>Total de preguntas en lista: ' + listaPreguntas.length + '</p>' +
+                    '<p>Si ves este mensaje, recarga la página con Cmd+Shift+R (Mac) o Ctrl+Shift+R (PC)</p>' +
+                    '</div>';
+                return;
+            }
 
             if (pregunta) {
                 const html = `
