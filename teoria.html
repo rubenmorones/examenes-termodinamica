@@ -365,7 +365,7 @@
 
                 if (tiempoRestante <= 0) {
                     clearInterval(interval);
-                    terminarExamen();
+                    cerrarExamenPorTiempo();
                     return;
                 }
 
@@ -402,6 +402,37 @@
             }
 
             document.getElementById('ultimaGuarda').textContent = 'Última guardada: ' + new Date().toLocaleTimeString();
+        }
+
+        // ⏰ Cuando expira el tiempo en Fase 2: guardar lo que haya, calificar y cerrar
+        async function cerrarExamenPorTiempo() {
+            const matricula = localStorage.getItem('matriculaActual');
+
+            try {
+                // 1) Guardar respuestas de teoría que estén en memoria
+                await guardarAutomaticamente();
+
+                // 2) Calificar con lo que haya (las que estén en blanco cuentan como incorrectas)
+                if (typeof window.calcularCalificacion === 'function') {
+                    const respuestasProblemas = JSON.parse(localStorage.getItem('respuestasExamen') || '{}');
+                    const calificacion = window.calcularCalificacion(matricula, respuestasProblemas, respuestasTeoria);
+                    await supabaseClient
+                        .from('estudiantes')
+                        .update({
+                            calificacion_final: calificacion.puntos,
+                            calificacion_liberada: false,
+                            fecha_envio: new Date().toISOString()
+                        })
+                        .eq('matricula', matricula);
+                }
+
+                localStorage.removeItem('fase');
+                alert('⏱️ Tu tiempo se acabó.\n\nEl examen se cerró automáticamente con las respuestas que alcanzaste a registrar. Los apartados sin respuesta se calificaron en cero.');
+            } catch (err) {
+                console.error('Error cerrando examen por tiempo:', err);
+                alert('⏱️ Tu tiempo se acabó. Si tienes problema técnico contacta al profesor.');
+            }
+            window.location.href = 'index.html';
         }
 
         async function terminarExamen() {

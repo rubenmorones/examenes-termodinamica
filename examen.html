@@ -604,7 +604,7 @@
 
                 if (tiempoRestante <= 0) {
                     clearInterval(interval);
-                    terminarFase1();
+                    cerrarExamenPorTiempo();
                     return;
                 }
 
@@ -766,6 +766,41 @@
             }
 
             document.getElementById('ultimaGuarda').textContent = 'Última guardada: ' + new Date().toLocaleTimeString();
+        }
+
+        // ⏰ Cuando expira el tiempo en Fase 1: guardar lo que haya, calificar y cerrar
+        async function cerrarExamenPorTiempo() {
+            const matricula = localStorage.getItem('matriculaActual');
+
+            try {
+                // 1) Guardar respuestas de problemas que estén en localStorage
+                await guardarAutomaticamente();
+
+                // 2) Cargar respuestas de teoría (si pasó por fase 2 antes de cerrarse aquí)
+                const respuestasTeoria = JSON.parse(localStorage.getItem('respuestasTeoriaLocal') || '{}');
+                const respuestasProblemas = JSON.parse(localStorage.getItem('respuestasExamen') || '{}');
+
+                // 3) Calificar con lo que haya (las preguntas en blanco se evalúan como incorrectas = 0)
+                if (typeof window.calcularCalificacion === 'function') {
+                    const calificacion = window.calcularCalificacion(matricula, respuestasProblemas, respuestasTeoria);
+                    await supabaseClient
+                        .from('estudiantes')
+                        .update({
+                            calificacion_final: calificacion.puntos,
+                            calificacion_liberada: false,
+                            fecha_envio: new Date().toISOString()
+                        })
+                        .eq('matricula', matricula);
+                }
+
+                // 4) Limpiar localStorage de fase y redirigir
+                localStorage.removeItem('fase');
+                alert('⏱️ Tu tiempo se acabó.\n\nEl examen se cerró automáticamente con las respuestas que alcanzaste a registrar. Los apartados sin respuesta se calificaron en cero.');
+            } catch (err) {
+                console.error('Error cerrando examen por tiempo:', err);
+                alert('⏱️ Tu tiempo se acabó. Si tienes problema técnico contacta al profesor.');
+            }
+            window.location.href = 'index.html';
         }
 
         async function terminarFase1() {
