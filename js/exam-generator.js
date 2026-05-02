@@ -7,25 +7,38 @@ function generarExamenEstudiante(matricula) {
       throw new Error('Los datos de problemas no están cargados');
     }
 
-    // Calcular índice
+    // Calcular índice (2001001 → 0, 2001002 → 1, etc.)
     const index = parseInt(matricula) - 2001001;
     if (index < 0 || index >= 28) {
-      throw new Error(`Matrícula ${matricula} inválida`);
+      throw new Error('Matrícula ' + matricula + ' inválida');
     }
 
-    // Obtener problemas
+    // Problemas 1-4: son arrays, acceso por índice
     const p1 = window.problem1Versions[index];
     const p2 = window.problem2Versions[index];
     const p3 = window.problem3Versions[index];
     const p4 = window.problem4Versions[index];
-    const p5 = window.problem5Versions[matricula] || window.problem5Versions[index];
+
+    // Problema 5: es un objeto con clave = matrícula
+    const p5raw = window.problem5Versions[matricula] || window.problem5Versions[parseInt(matricula)];
+    if (!p5raw) throw new Error('No se encontró el Problema 5 para matrícula ' + matricula);
+
+    // Normalizar problema 5 (tiene estructura diferente)
+    const p5 = {
+      titulo: 'Compresión isotérmica irreversible de agua',
+      enunciado: p5raw.enunciado,
+      solucion: p5raw.solucion.V2 || JSON.stringify(p5raw.solucion), // V2 es la respuesta principal
+      tolerancia: p5raw.tolerancia,
+      unidad: 'cm³',
+      explicacion: 'Ver solución completa: V2=' + p5raw.solucion.V2 + ' cm³, W=' + p5raw.solucion.W + ' kJ, ΔH=' + p5raw.solucion.DH + ' kJ'
+    };
 
     // Obtener preguntas de teoría
     if (!window.preguntasTeoria) {
       throw new Error('Las preguntas de teoría no están cargadas');
     }
 
-    // Seleccionar 10 preguntas aleatorias (seeded por matrícula)
+    // Seleccionar 10 preguntas aleatorias con seed por matrícula
     const todasLasMatriculas = Object.keys(window.preguntasTeoria).sort();
     const seed = parseInt(matricula);
     const random = (i) => {
@@ -50,45 +63,45 @@ function generarExamenEstudiante(matricula) {
       problemas: {
         problema1: {
           numero: 1,
-          titulo: p1.titulo,
+          titulo: p1.titulo || 'Segunda Ley de la Termodinámica',
           enunciado: p1.enunciado,
-          solucion: p1.solucion,
+          solucion: String(p1.solucion),
           tolerancia: p1.tolerancia,
-          unidad: p1.unidad,
-          explicacion: p1.explicacion
+          unidad: p1.unidad || 'J/K',
+          explicacion: p1.explicacion || ''
         },
         problema2: {
           numero: 2,
-          titulo: p2.titulo,
+          titulo: p2.titulo || 'Máquina Térmica',
           enunciado: p2.enunciado,
-          solucion: p2.solucion,
+          solucion: String(p2.solucion),
           tolerancia: p2.tolerancia,
-          unidad: p2.unidad,
-          explicacion: p2.explicacion
+          unidad: p2.unidad || '%',
+          explicacion: p2.explicacion || ''
         },
         problema3: {
           numero: 3,
-          titulo: p3.titulo,
+          titulo: p3.titulo || 'Entropía en Compresión Irreversible',
           enunciado: p3.enunciado,
-          solucion: p3.solucion,
+          solucion: String(p3.solucion),
           tolerancia: p3.tolerancia,
-          unidad: p3.unidad,
-          explicacion: p3.explicacion
+          unidad: p3.unidad || 'J/K',
+          explicacion: p3.explicacion || ''
         },
         problema4: {
           numero: 4,
-          titulo: p4.titulo,
+          titulo: p4.titulo || 'Throttling Isoentálpico',
           enunciado: p4.enunciado,
-          solucion: p4.solucion,
+          solucion: String(p4.solucion),
           tolerancia: p4.tolerancia,
-          unidad: p4.unidad,
-          explicacion: p4.explicacion
+          unidad: p4.unidad || 'K',
+          explicacion: p4.explicacion || ''
         },
         problema5: {
           numero: 5,
           titulo: p5.titulo,
           enunciado: p5.enunciado,
-          solucion: p5.solucion,
+          solucion: String(p5.solucion),
           tolerancia: p5.tolerancia,
           unidad: p5.unidad,
           explicacion: p5.explicacion
@@ -99,6 +112,7 @@ function generarExamenEstudiante(matricula) {
         preguntas: preguntasSeleccionadas
       }
     };
+
   } catch (err) {
     console.error('❌ Error en generarExamenEstudiante:', err.message);
     throw err;
