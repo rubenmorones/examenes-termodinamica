@@ -11,8 +11,27 @@
  * - 10 preguntas de teoría (seleccionadas aleatoriamente del banco de 20 disponibles)
  */
 
-const { problem1Versions, problem2Versions, problem3Versions, problem4Versions, problem5Versions } = require('./problemas.js');
-const { preguntasTeoria, obtenerMatriculasDisponibles } = require('./BANCO_PREGUNTAS_TEORIA_28.js');
+// Cargar variables globales del navegador o módulos Node.js
+let problem1Versions, problem2Versions, problem3Versions, problem4Versions, problem5Versions;
+let preguntasTeoria, obtenerMatriculasDisponibles;
+
+// Para navegador (las variables serán cargadas por los scripts anteriores)
+if (typeof window !== 'undefined') {
+    // Las variables están en window después de que se cargan los otros scripts
+    // Esto se inicializa cuando se cargan todos los scripts
+} else {
+    // Para Node.js
+    const datos = require('./problemas.js');
+    problem1Versions = datos.problem1Versions;
+    problem2Versions = datos.problem2Versions;
+    problem3Versions = datos.problem3Versions;
+    problem4Versions = datos.problem4Versions;
+    problem5Versions = datos.problem5Versions;
+
+    const teoriaDatos = require('./BANCO_PREGUNTAS_TEORIA_28.js');
+    preguntasTeoria = teoriaDatos.preguntasTeoria;
+    obtenerMatriculasDisponibles = teoriaDatos.obtenerMatriculasDisponibles;
+}
 
 // ============================================================================
 // CONSTANTES Y UTILIDADES
@@ -33,7 +52,15 @@ const TODAS_MATRICULAS = Array.from({ length: 28 }, (_, i) => {
 });
 
 // Matrículas disponibles en el banco de preguntas de teoría (20 preguntas)
-const MATRICULAS_TEORIA_DISPONIBLES = obtenerMatriculasDisponibles();
+// Se inicializa lazily cuando se necesita
+let MATRICULAS_TEORIA_DISPONIBLES = null;
+
+function inicializarMatriculas() {
+  if (!MATRICULAS_TEORIA_DISPONIBLES && typeof obtenerMatriculasDisponibles === 'function') {
+    MATRICULAS_TEORIA_DISPONIBLES = obtenerMatriculasDisponibles();
+  }
+  return MATRICULAS_TEORIA_DISPONIBLES || [];
+}
 
 /**
  * Selecciona N preguntas aleatorias del banco de teoría (sin repetición)
@@ -43,8 +70,11 @@ const MATRICULAS_TEORIA_DISPONIBLES = obtenerMatriculasDisponibles();
  * @returns {Array<string>} Array de matrículas de preguntas seleccionadas
  */
 function seleccionarPreguntasAleatorias(matriculaEstudiante, cantidad = 10) {
+  // Inicializar si es necesario
+  const matriculas = inicializarMatriculas();
+
   // Crear una copia del array disponible
-  let disponibles = [...MATRICULAS_TEORIA_DISPONIBLES];
+  let disponibles = [...matriculas];
 
   // Seeding pseudo-aleatorio basado en matrícula para reproducibilidad
   const seed = parseInt(matriculaEstudiante);
@@ -227,12 +257,26 @@ function obtenerEstadísticas() {
 // EXPORTAR FUNCIONES
 // ============================================================================
 
-module.exports = {
-  generarExamenEstudiante,
-  generarTodosLosExamenes,
-  obtenerExamen,
-  obtenerEstadísticas,
-  seleccionarPreguntasAleatorias,
-  TODAS_MATRICULAS,
-  MATRICULAS_TEORIA_DISPONIBLES
-};
+// Para Node.js
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    generarExamenEstudiante,
+    generarTodosLosExamenes,
+    obtenerExamen,
+    obtenerEstadísticas,
+    seleccionarPreguntasAleatorias,
+    TODAS_MATRICULAS,
+    MATRICULAS_TEORIA_DISPONIBLES: inicializarMatriculas()
+  };
+}
+
+// Para navegador
+if (typeof window !== 'undefined') {
+  window.generarExamenEstudiante = generarExamenEstudiante;
+  window.generarTodosLosExamenes = generarTodosLosExamenes;
+  window.obtenerExamen = obtenerExamen;
+  window.obtenerEstadísticas = obtenerEstadísticas;
+  window.seleccionarPreguntasAleatorias = seleccionarPreguntasAleatorias;
+  window.TODAS_MATRICULAS = TODAS_MATRICULAS;
+  window.inicializarMatriculas = inicializarMatriculas;
+}

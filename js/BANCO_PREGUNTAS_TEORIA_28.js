@@ -309,9 +309,20 @@ function validarRespuesta(matricula, respuestaEstudiante) {
   };
 }
 
-module.exports = {
-  preguntasTeoria,
-  obtenerPreguntaTeoria,
-  validarRespuesta,
-  obtenerMatriculasDisponibles
-};
+// Para Node.js
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    preguntasTeoria,
+    obtenerPreguntaTeoria,
+    validarRespuesta,
+    obtenerMatriculasDisponibles
+  };
+}
+
+// Para navegador
+if (typeof window !== 'undefined') {
+  window.preguntasTeoria = preguntasTeoria;
+  window.obtenerPreguntaTeoria = obtenerPreguntaTeoria;
+  window.validarRespuesta = validarRespuesta;
+  window.obtenerMatriculasDisponibles = obtenerMatriculasDisponibles;
+}
