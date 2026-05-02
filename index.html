@@ -101,11 +101,8 @@
                 return;
             }
 
-            // Convertir a formato: si es 111111, dejar como está; si es 7 dígitos, agregar 200
+            // Usar la matrícula tal como se ingresa
             let matriculaFormato = matricula;
-            if (matricula.length === 7) {
-                matriculaFormato = '200' + matricula;
-            }
 
             // MODO DEMO: Si es 111111, permitir acceso directo sin Supabase
             if (matriculaFormato === '111111') {
