@@ -171,49 +171,82 @@ function construirPreguntasFase2(matricula, problemasFallidos) {
   return lista;
 }
 
-// Calcular calificación final
+// Calcular calificación final con lógica de recuperación por diagnósticas
+// Recuperación: 1/3 = 15%, 2/3 = 30%, 3/3 = 50% del valor del problema
 function calcularCalificacion(matricula, respuestasProblemas, respuestasTeoria) {
   const examen = generarExamenEstudiante(matricula);
   let puntos = 0;
   const detalle = { problemas: {}, teoria: {}, diagnostica: {} };
 
-  // Problemas: P1-P4 = 20 pts c/u, P5 = 10 pts (total 90)
+  // Valor de cada problema: P1-P4 = 20 pts c/u, P5 = 10 pts (total 90)
   const puntosProblemas = { 1: 20, 2: 20, 3: 20, 4: 20, 5: 10 };
+
+  // Determinar problemas correctos y fallidos
+  const problemasFallidos = [];
   for (let i = 1; i <= 5; i++) {
     const prob = examen.problemas['problema' + i];
     const correcta = validarRespuestaProblema(respuestasProblemas[i], prob.solucion, prob.tolerancia);
     if (correcta) {
       puntos += puntosProblemas[i];
-      detalle.problemas[i] = { puntos: puntosProblemas[i], correcta: true };
+      detalle.problemas[i] = { puntos: puntosProblemas[i], correcta: true, recuperacion: false };
     } else {
-      detalle.problemas[i] = { puntos: 0, correcta: false };
+      detalle.problemas[i] = { puntos: 0, correcta: false, recuperacion: true, valor: puntosProblemas[i] };
+      problemasFallidos.push(i);
     }
   }
 
-  // Teoría: 10 preguntas × 1 pto cada una
-  const fallidos = obtenerProblemasFallidos(matricula, respuestasProblemas);
-  const lista = construirPreguntasFase2(matricula, fallidos);
+  // Construir lista de preguntas (10 teoría + 3 diagnósticas por problema fallido)
+  const lista = construirPreguntasFase2(matricula, problemasFallidos);
+
+  // Contadores de respuestas correctas en diagnósticas por problema fallido
+  const aciertosDiagnostica = {};
+  problemasFallidos.forEach(p => { aciertosDiagnostica[p] = 0; });
+
+  // Procesar cada respuesta
   lista.forEach((p, idx) => {
     const numUI = idx + 1;
-    if (respuestasTeoria[numUI] === p.correcta) {
-      if (p.tipo === 'teoria') {
+    const respuestaCorrecta = (respuestasTeoria[numUI] === p.correcta);
+
+    if (p.tipo === 'teoria') {
+      // Teoría: 1 punto por respuesta correcta
+      if (respuestaCorrecta) {
         puntos += 1;
         detalle.teoria[numUI] = { puntos: 1, correcta: true };
       } else {
-        // Las diagnósticas dan media oportunidad de recuperar puntos
-        puntos += 2; // 2 puntos por diagnóstica correcta (de 6 posibles por problema)
-        detalle.diagnostica[numUI] = { puntos: 2, correcta: true };
-      }
-    } else {
-      if (p.tipo === 'teoria') {
         detalle.teoria[numUI] = { puntos: 0, correcta: false };
-      } else {
-        detalle.diagnostica[numUI] = { puntos: 0, correcta: false };
       }
+    } else if (p.tipo === 'diagnostica') {
+      // Diagnóstica: contar aciertos por problema (puntos se asignan al final)
+      if (respuestaCorrecta) {
+        aciertosDiagnostica[p.problema] = (aciertosDiagnostica[p.problema] || 0) + 1;
+      }
+      detalle.diagnostica[numUI] = {
+        problema: p.problema,
+        correcta: respuestaCorrecta,
+        puntos: 0  // se calcula al final
+      };
     }
   });
 
-  return { puntos, sobre: 100, detalle };
+  // Aplicar recuperación por diagnósticas (15% / 30% / 50% del valor del problema)
+  problemasFallidos.forEach(numProblema => {
+    const aciertos = aciertosDiagnostica[numProblema] || 0;
+    const valor = puntosProblemas[numProblema];
+    let porcentaje = 0;
+
+    if (aciertos === 1) porcentaje = 0.15;
+    else if (aciertos === 2) porcentaje = 0.30;
+    else if (aciertos === 3) porcentaje = 0.50;
+
+    const puntosRecuperados = valor * porcentaje;
+    puntos += puntosRecuperados;
+
+    detalle.problemas[numProblema].puntosRecuperados = puntosRecuperados;
+    detalle.problemas[numProblema].aciertosDiagnostica = aciertos;
+    detalle.problemas[numProblema].porcentajeRecuperado = porcentaje * 100;
+  });
+
+  return { puntos: Math.round(puntos * 10) / 10, sobre: 100, detalle };
 }
 
 if (typeof window !== 'undefined') {
