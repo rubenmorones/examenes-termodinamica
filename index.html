@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Examen 2do Parcial - Termodinámica</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <div class="logo">
+                <h1>🌡️ Termodinámica</h1>
+                <p>2do Parcial - Sistema de Evaluación</p>
+            </div>
+
+            <div class="form-group">
+                <label for="matricula">Matrícula del Estudiante</label>
+                <input
+                    type="text"
+                    id="matricula"
+                    placeholder="Ej: 2001001"
+                    maxlength="10"
+                >
+                <small>Ingresa tu matrícula de 7 dígitos</small>
+            </div>
+
+            <button id="btnIngresar" class="btn btn-primary" onclick="iniciarExamen()">
+                Ingresar al Examen
+            </button>
+
+            <div id="mensajeError" class="error-message" style="display:none;"></div>
+
+            <hr>
+
+            <div class="info-box">
+                <h3>ℹ️ Información Importante</h3>
+                <ul>
+                    <li><strong>Tiempo total:</strong> 7 horas</li>
+                    <li><strong>Problemas:</strong> 5 (20 pts c/u, excepto P5: 10 pts)</li>
+                    <li><strong>Teoría:</strong> 10 preguntas (1 pto c/u)</li>
+                    <li><strong>Probatorios:</strong> PDF/JPG de cada problema</li>
+                    <li><strong>Calificaciones:</strong> Se mostrarán cuando se liberen</li>
+                </ul>
+            </div>
+
+            <div class="footer-info">
+                <p>© 2026 - Universidad Autónoma de Nuevo León</p>
+                <p>Sistemas de Evaluación Académica</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts de Supabase y App -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/app.js"></script>
+
+    <script>
+        // Permitir Enter para ingresar
+        document.getElementById('matricula').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                iniciarExamen();
+            }
+        });
+
+        // Validar conexión al cargar
+        window.addEventListener('load', async function() {
+            const conectado = await verificarConexion();
+            if (!conectado) {
+                mostrarError('Error de conexión con el servidor. Intenta más tarde.');
+                document.getElementById('btnIngresar').disabled = true;
+            }
+        });
+
+        function mostrarError(mensaje) {
+            const div = document.getElementById('mensajeError');
+            div.textContent = mensaje;
+            div.style.display = 'block';
+        }
+
+        function limpiarError() {
+            const div = document.getElementById('mensajeError');
+            div.style.display = 'none';
+        }
+
+        async function iniciarExamen() {
+            const matricula = document.getElementById('matricula').value.trim();
+            limpiarError();
+
+            // Validar
+            if (!matricula) {
+                mostrarError('Por favor ingresa tu matrícula');
+                return;
+            }
+
+            // Permitir matrícula de 6 dígitos (111111) o 7 dígitos (2001001)
+            if (!/^\d{6,7}$/.test(matricula)) {
+                mostrarError('La matrícula debe tener 6 o 7 dígitos (ej: 111111 o 2001001)');
+                return;
+            }
+
+            // Convertir a formato: si es 111111, dejar como está; si es 7 dígitos, agregar 200
+            let matriculaFormato = matricula;
+            if (matricula.length === 7) {
+                matriculaFormato = '200' + matricula;
+            }
+
+            // MODO DEMO: Si es 111111, permitir acceso directo sin Supabase
+            if (matriculaFormato === '111111') {
+                console.log('✅ Acceso directo para matrícula 111111 (DEMO)');
+                localStorage.setItem('matriculaActual', matriculaFormato);
+                localStorage.setItem('modoDemo', 'false');
+                window.location.href = 'examen.html';
+                return;
+            }
+
+            try {
+                // Verificar que el estudiante existe (para otros estudiantes)
+                const { data, error } = await supabaseClient
+                    .from('estudiantes')
+                    .select('*')
+                    .eq('matricula', matriculaFormato)
+                    .single();
+
+                if (error || !data) {
+                    // Crear estudiante si no existe
+                    const { data: newStudent, error: createError } = await supabaseClient
+                        .from('estudiantes')
+                        .insert([{ matricula: matriculaFormato }])
+                        .select();
+
+                    if (createError) {
+                        mostrarError('Error al registrar estudiante: ' + createError.message);
+                        return;
+                    }
+                }
+
+                // Guardar en localStorage y redirigir
+                localStorage.setItem('matriculaActual', matriculaFormato);
+                localStorage.setItem('modoDemo', 'false');
+                window.location.href = 'examen.html';
+
+            } catch (err) {
+                mostrarError('Error: ' + err.message);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DEMO - Examen Termodinámica</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="pantallaLogin" class="login-container" style="display: flex;">
+        <div class="login-box">
+            <div class="logo">
+                <h1>🌡️ DEMOSTRACIÓN</h1>
+                <p>Examen 2do Parcial - Prueba Sin Datos Reales</p>
+            </div>
+
+            <div class="info-box">
+                <h3>📝 Nota Importante</h3>
+                <p>Esta es una <strong>DEMOSTRACIÓN</strong> que funciona sin conectarse a una base de datos. Los datos NO se guardan.</p>
+                <ul>
+                    <li>✓ Ver interfaz completa</li>
+                    <li>✓ Probar timer y navegación</li>
+                    <li>✓ Responder preguntas</li>
+                    <li>✓ Simular upload de archivos</li>
+                </ul>
+            </div>
+
+            <button class="btn btn-primary" onclick="iniciarDemo()" style="width: 100%; margin-bottom: 1rem;">
+                ▶️ Comenzar Demo (Matrícula: 111111)
+            </button>
+
+            <button class="btn btn-secondary" onclick="window.location.href='index.html'" style="width: 100%;">
+                ← Volver a Login Real
+            </button>
+
+            <hr>
+
+            <div class="info-box">
+                <h3>💡 Cómo usar esta demo:</h3>
+                <ol style="margin-left: 1rem; color: var(--color-dark);">
+                    <li>Click en "Comenzar Demo"</li>
+                    <li>Explora los 5 problemas</li>
+                    <li>Intenta subir un archivo (simula)</li>
+                    <li>Ve a Teoría</li>
+                    <li>Responde preguntas</li>
+                    <li>Termina examen</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <!-- PANTALLA DE EXAMEN DEMO -->
+    <div id="pantallaExamen" style="display: none; height: 100vh; flex-direction: column;">
+        <!-- Header -->
+        <header class="examen-header">
+            <div class="header-left">
+                <h2 id="faseTitulo">Fase 1: Problemas (DEMO)</h2>
+                <p>Matrícula: 111111 | PRUEBA SIN GUARDAR DATOS</p>
+            </div>
+            <div class="timer-box">
+                <div id="timerDisplay" class="timer">0:07:00</div>
+                <p>Tiempo restante</p>
+            </div>
+        </header>
+
+        <!-- Contenido -->
+        <div class="examen-content">
+            <!-- Selector de problemas -->
+            <aside class="problema-selector" id="selectorProblemas">
+                <h3>Problemas</h3>
+                <div class="problema-list" id="listaProblemas"></div>
+                <div class="progress-box">
+                    <p>Estado: <strong id="estadoProgreso">Fase 1</strong></p>
+                </div>
+            </aside>
+
+            <!-- Área principal -->
+            <main class="problema-area" id="areaPrincipal"></main>
+        </div>
+
+        <!-- Footer -->
+        <footer class="examen-footer">
+            <button id="btnSiguiente" class="btn btn-success" onclick="siguienteAccion()">
+                ✓ Siguiente
+            </button>
+            <small>Esta es una demostración. No se guardan datos.</small>
+        </footer>
+    </div>
+
+    <!-- Modal para demo de upload -->
+    <div id="modalDemo" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📎 Simular Upload de Probatorio</h3>
+                <button class="close" onclick="cerrarModalDemo()">✕</button>
+            </div>
+            <div class="modal-body">
+                <p>En la versión real, aquí subirías un PDF o JPG.</p>
+                <div class="file-upload">
+                    <input type="file" id="fileInputDemo" onchange="manejarArchivoDemo(event)">
+                    <label for="fileInputDemo" class="file-label">
+                        📎 Seleccionar archivo (simulado)
+                    </label>
+                </div>
+                <div id="filePreviewDemo" style="margin-top:15px;"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="cerrarModalDemo()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* Animaciones de ingeniería para problemas */
+        .animation-container {
+            margin: 1.5rem 0;
+            display: flex;
+            justify-content: center;
+            background: rgba(136, 68, 255, 0.05);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid rgba(136, 68, 255, 0.2);
+        }
+
+        svg {
+            width: 100%;
+            max-width: 300px;
+            height: auto;
+        }
+
+        @keyframes particle-float {
+            0%, 100% { opacity: 1; transform: translate(0, 0); }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes particle-1 {
+            0% { cx: 100; cy: 100; r: 3; }
+            100% { cx: 180; cy: 40; r: 5; opacity: 0; }
+        }
+
+        @keyframes particle-2 {
+            0% { cx: 100; cy: 100; r: 3; }
+            100% { cx: 20; cy: 30; r: 5; opacity: 0; }
+        }
+
+        @keyframes particle-3 {
+            0% { cx: 100; cy: 100; r: 3; }
+            100% { cx: 180; cy: 160; r: 5; opacity: 0; }
+        }
+
+        @keyframes particle-4 {
+            0% { cx: 100; cy: 100; r: 3; }
+            100% { cx: 40; cy: 170; r: 5; opacity: 0; }
+        }
+
+        @keyframes heat-flow {
+            0% { strokeDashoffset: 100; }
+            100% { strokeDashoffset: 0; }
+        }
+
+        @keyframes compress {
+            0%, 100% { transform: scaleX(1); }
+            50% { transform: scaleX(0.7); }
+        }
+
+        @keyframes expand {
+            0%, 100% { r: 30; }
+            50% { r: 50; }
+        }
+
+        @keyframes valve-flow {
+            0% { cx: 20; }
+            100% { cx: 280; }
+        }
+
+        @keyframes molecule-compress {
+            0% { cx: 50; }
+            50% { cx: 80; }
+            100% { cx: 120; }
+        }
+
+        .particle {
+            fill: #8844ff;
+            filter: drop-shadow(0 0 4px rgba(136, 68, 255, 0.8));
+        }
+
+        .heat-arrow {
+            stroke: #00ffff;
+            stroke-width: 2;
+            fill: none;
+            stroke-dasharray: 100;
+            filter: drop-shadow(0 0 6px rgba(0, 255, 255, 0.6));
+        }
+
+        .gas-molecule {
+            fill: #ff006e;
+            filter: drop-shadow(0 0 4px rgba(255, 0, 110, 0.6));
+        }
+
+        .container-rect {
+            stroke: #00ffff;
+            stroke-width: 2;
+            fill: none;
+            filter: drop-shadow(0 0 6px rgba(0, 255, 255, 0.4));
+        }
+
+        .label-text {
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            fill: #00ffff;
+            text-anchor: middle;
+        }
+
+        .hot-temp { fill: #ff006e; }
+        .cold-temp { fill: #0099ff; }
+    </style>
+
+    <script src="js/utils.js"></script>
+    <script>
+        let fase = 1;
+        let problemaActual = 1;
+        let preguntaActual = 1;
+        let tiempoRestante = 7 * 3600; // 7 horas en segundos
+        let probatoriosSubidos = {}; // {1: true, 2: true, ...}
+        let respuestasDemoLocal = {1: '', 2: '', 3: '', 4: '', 5: ''};
+
+        function cargarRespuestasLocal() {
+            const guardadas = localStorage.getItem('respuestasDemoExamen');
+            if (guardadas) {
+                respuestasDemoLocal = JSON.parse(guardadas);
+            }
+        }
+
+        // Datos de ejemplo
+        const problemasDemo = {
+            1: {
+                titulo: "Problema 1: Segunda Ley de la Termodinámica",
+                enunciado: "Se realiza un experimento donde se transfieren 5200 J de calor a un sistema. La temperatura inicial del sistema es 200 K y la temperatura final es 250 K. La capacidad calorífica a volumen constante es Cv = 25 J/K. Calcula el cambio de entropía del sistema en J/K.",
+                solucion: "24.82",
+                unidad: "J/K",
+                puntos: 20
+            },
+            2: {
+                titulo: "Problema 2: Máquina Térmica",
+                enunciado: "Una máquina térmica opera entre dos depósitos de calor a temperaturas T_h = 450 K (caliente) y T_c = 300 K (frío). Si la máquina absorbe 8500 J del depósito caliente, ¿cuál es su eficiencia?",
+                solucion: "35.5",
+                unidad: "%",
+                puntos: 20
+            },
+            3: {
+                titulo: "Problema 3: Entropía en Compresión",
+                enunciado: "Un gas ideal se comprime isotérmicamente de 100 L a 50 L a una temperatura de 298 K. Calcula el cambio de entropía para 2 moles del gas.",
+                solucion: "-11.5",
+                unidad: "J/K",
+                puntos: 20
+            },
+            4: {
+                titulo: "Problema 4: Throttling",
+                enunciado: "Un fluido se expande a través de una válvula (throttling) de 10 atm a 5 atm. Si la entalpía inicial es 500 kJ/kg, ¿cuál será la entalpía final?",
+                solucion: "500",
+                unidad: "kJ/kg",
+                puntos: 20
+            },
+            5: {
+                titulo: "Problema 5: Compresión de Agua",
+                enunciado: "Se comprime agua isotérmicamente a 25°C desde 1 atm a 100 atm. El coeficiente de compresibilidad κ ≈ 4.5×10⁻¹⁰ Pa⁻¹. Calcula el cambio de volumen porcentual.",
+                solucion: "-0.45",
+                unidad: "%",
+                puntos: 10
+            }
+        };
+
+        const preguntasTeoriaDemo = [
+            {
+                numero: 1,
+                pregunta: "¿Cuál es la formulación correcta de la Segunda Ley en términos de entropía?",
+                opciones: {
+                    a: "ΔS_universo siempre disminuye",
+                    b: "ΔS_universo = ΔS_sistema + ΔS_alrededores ≥ 0",
+                    c: "La entropía es constante",
+                    d: "ΔS_universo < 0 siempre",
+                    e: "No hay relación matemática",
+                    f: "Solo aplica a gases",
+                    g: "Es igual a cero"
+                },
+                correcta: "b"
+            },
+            {
+                numero: 2,
+                pregunta: "¿Por qué ninguna máquina térmica real puede alcanzar la eficiencia de Carnot?",
+                opciones: {
+                    a: "Porque Carnot es un teórico",
+                    b: "Porque los procesos reales son irreversibles",
+                    c: "Porque la tecnología no es suficiente",
+                    d: "Porque los materiales se degradan",
+                    e: "No hay razón física",
+                    f: "Solo en sistemas cerrados",
+                    g: "Depende de la presión"
+                },
+                correcta: "b"
+            },
+            {
+                numero: 3,
+                pregunta: "¿Qué indica un cambio de entropía positivo en el universo?",
+                opciones: {
+                    a: "Que el proceso es reversible",
+                    b: "Que es un proceso espontáneo o irreversible",
+                    c: "Que la energía se conserva",
+                    d: "Que no hay transferencia de calor",
+                    e: "Que el sistema se ordena más",
+                    f: "Que la presión aumenta",
+                    g: "Que la temperatura es constante"
+                },
+                correcta: "b"
+            },
+            {
+                numero: 4,
+                pregunta: "¿Cuál es la relación correcta en una máquina térmica?",
+                opciones: {
+                    a: "Q_entrada = Q_salida",
+                    b: "W = Q_entrada + Q_salida",
+                    c: "Q_entrada = W + Q_salida",
+                    d: "Q_salida = W + Q_entrada",
+                    e: "No hay relación",
+                    f: "W = Q_entrada - Q_salida",
+                    g: "Q_entrada = 0"
+                },
+                correcta: "c"
+            },
+            {
+                numero: 5,
+                pregunta: "¿Qué sucede con la entropía en un proceso adiabático irreversible?",
+                opciones: {
+                    a: "Disminuye",
+                    b: "Se mantiene constante",
+                    c: "Aumenta",
+                    d: "Desaparece",
+                    e: "Depende de la presión",
+                    f: "Se anula",
+                    g: "No existe"
+                },
+                correcta: "c"
+            },
+            {
+                numero: 6,
+                pregunta: "¿Qué representa la compresibilidad isotérmica κ?",
+                opciones: {
+                    a: "La rapidez de calentamiento",
+                    b: "La resistencia a cambiar de volumen bajo presión",
+                    c: "La capacidad de almacenar energía",
+                    d: "La velocidad del sonido",
+                    e: "El cambio de temperatura",
+                    f: "La viscosidad del fluido",
+                    g: "La densidad relativa"
+                },
+                correcta: "b"
+            },
+            {
+                numero: 7,
+                pregunta: "¿Cuál es la Primera Ley de la Termodinámica?",
+                opciones: {
+                    a: "La entropía siempre aumenta",
+                    b: "ΔU = Q - W (conservación de energía)",
+                    c: "No hay máquinas de movimiento perpetuo",
+                    d: "El calor fluye del frío al caliente",
+                    e: "La temperatura es absoluta",
+                    f: "No hay relación entre Q y W",
+                    g: "U es siempre constante"
+                },
+                correcta: "b"
+            },
+            {
+                numero: 8,
+                pregunta: "¿Qué caracteriza un proceso isotérmico reversible?",
+                opciones: {
+                    a: "La presión es constante",
+                    b: "La temperatura es constante, sin generación neta de entropía",
+                    c: "No hay transferencia de calor",
+                    d: "El volumen no cambia",
+                    e: "La entropía disminuye",
+                    f: "El proceso es instantáneo",
+                    g: "No hay trabajo realizado"
+                },
+                correcta: "b"
+            },
+            {
+                numero: 9,
+                pregunta: "¿Cómo se relacionan entalpía H y energía interna U?",
+                opciones: {
+                    a: "H = U - PV",
+                    b: "H = U + PV",
+                    c: "H = U × PV",
+                    d: "H = U / PV",
+                    e: "No hay relación",
+                    f: "H = U + T",
+                    g: "H = U - TS"
+                },
+                correcta: "b"
+            },
+            {
+                numero: 10,
+                pregunta: "¿Cuál es la condición para que un proceso sea termodinámicamente posible?",
+                opciones: {
+                    a: "ΔU = 0",
+                    b: "ΔS_total ≥ 0 (Segunda Ley)",
+                    c: "Q > W siempre",
+                    d: "T = constante",
+                    e: "P = constante",
+                    f: "No hay restricción",
+                    g: "ΔH = 0"
+                },
+                correcta: "b"
+            }
+        ];
+
+        // Iniciar demo
+        function iniciarDemo() {
+            document.getElementById('pantallaLogin').style.display = 'none';
+            document.getElementById('pantallaExamen').style.display = 'flex';
+            cargarRespuestasLocal();
+            renderizarFase1();
+            iniciarTimer();
+        }
+
+        function renderizarFase1() {
+            fase = 1;
+            problemaActual = 1;
+            document.getElementById('faseTitulo').textContent = 'Fase 1: Problemas (DEMO)';
+            document.getElementById('estadoProgreso').textContent = 'Fase 1 - Problema ' + problemaActual;
+
+            // Crear botones de problemas
+            const html = Object.keys(problemasDemo).map(id => `
+                <button class="problema-btn ${id == problemaActual ? 'active' : ''}"
+                        onclick="cambiarProblema(${id})">
+                    <span class="numero">${id}</span>
+                    <span class="titulo">P${id}</span>
+                </button>
+            `).join('');
+            document.getElementById('listaProblemas').innerHTML = html;
+
+            mostrarProblemaDemo(problemaActual);
+            document.getElementById('btnSiguiente').textContent = '✓ Continuar a Teoría';
+        }
+
+        function cambiarProblema(numero) {
+            problemaActual = numero;
+            mostrarProblemaDemo(numero);
+            document.querySelectorAll('.problema-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.closest('.problema-btn').classList.add('active');
+        }
+
+        function guardarRespuestaLocal(numero, valor) {
+            respuestasDemoLocal[numero] = valor;
+            localStorage.setItem('respuestasDemoExamen', JSON.stringify(respuestasDemoLocal));
+        }
+
+        function guardarRespuestaTeoriaDemo(numero, valor) {
+            localStorage.setItem(`respuestaTeoriaDemo_${numero}`, valor);
+        }
+
+        function getAnimacionProblema(numero) {
+            const animaciones = {
+                1: `<div class="animation-container">
+                    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <style>
+                                .p1 { animation: particle-1 3s ease-in infinite; }
+                                .p2 { animation: particle-2 3.2s ease-in infinite; }
+                                .p3 { animation: particle-3 3.4s ease-in infinite; }
+                                .p4 { animation: particle-4 3.6s ease-in infinite; }
+                            </style>
+                        </defs>
+                        <circle cx="100" cy="100" r="40" class="container-rect" fill="rgba(136,68,255,0.1)"/>
+                        <circle class="particle p1" r="3"/>
+                        <circle class="particle p2" r="3"/>
+                        <circle class="particle p3" r="3"/>
+                        <circle class="particle p4" r="3"/>
+                    </svg>
+                </div>`,
+
+                2: `<div class="animation-container">
+                    <svg viewBox="0 0 300 150" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <style>
+                                .hot-flow { animation: heat-flow 2s linear infinite; }
+                                .cold-flow { animation: heat-flow 2s linear infinite 0.5s; }
+                            </style>
+                        </defs>
+                        <!-- Depósito caliente -->
+                        <rect x="20" y="20" width="60" height="60" class="container-rect" fill="#ff006e" opacity="0.1"/>
+
+                        <!-- Máquina térmica -->
+                        <circle cx="150" cy="50" r="30" class="container-rect" fill="rgba(0,255,255,0.1)"/>
+
+                        <!-- Depósito frío -->
+                        <rect x="220" y="20" width="60" height="60" class="container-rect" fill="#0099ff" opacity="0.1"/>
+
+                        <!-- Flujo de energía -->
+                        <path class="heat-arrow hot-flow" d="M 80 50 Q 115 35 120 50"/>
+                        <path class="heat-arrow cold-flow" d="M 180 50 Q 215 65 220 50"/>
+                    </svg>
+                </div>`,
+
+                3: `<div class="animation-container">
+                    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <style>
+                                .gas { animation: expand 3s ease-in-out infinite; }
+                            </style>
+                        </defs>
+                        <!-- Cilindro -->
+                        <rect x="30" y="50" width="140" height="100" class="container-rect" fill="rgba(136,68,255,0.05)"/>
+
+                        <!-- Gas comprimiendo/expandiendo -->
+                        <circle class="gas-molecule gas" cx="100" cy="100" r="35"/>
+                    </svg>
+                </div>`,
+
+                4: `<div class="animation-container">
+                    <svg viewBox="0 0 300 150" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <style>
+                                .droplet { animation: valve-flow 3s ease-in-out infinite; }
+                            </style>
+                        </defs>
+                        <!-- Tubo de entrada -->
+                        <rect x="10" y="60" width="40" height="30" class="container-rect"/>
+
+                        <!-- Válvula -->
+                        <circle cx="80" cy="75" r="15" class="container-rect"/>
+                        <line x1="65" y1="75" x2="95" y2="75" stroke="#00ffff" stroke-width="2"/>
+
+                        <!-- Tubo de salida -->
+                        <rect x="250" y="60" width="40" height="30" class="container-rect"/>
+
+                        <!-- Fluido pasando -->
+                        <circle class="gas-molecule droplet" cx="80" cy="75" r="4"/>
+                    </svg>
+                </div>`,
+
+                5: `<div class="animation-container">
+                    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <style>
+                                .mol1 { animation: molecule-compress 4s ease-in-out infinite; }
+                                .mol2 { animation: molecule-compress 4s ease-in-out infinite 0.3s; }
+                                .mol3 { animation: molecule-compress 4s ease-in-out infinite 0.6s; }
+                            </style>
+                        </defs>
+                        <!-- Contenedor -->
+                        <rect x="30" y="40" width="140" height="120" class="container-rect" fill="rgba(0,153,255,0.1)"/>
+
+                        <!-- Moléculas comprimiéndose -->
+                        <circle class="gas-molecule mol1" r="4" cy="80"/>
+                        <circle class="gas-molecule mol2" r="4" cy="120"/>
+                        <circle class="gas-molecule mol3" r="4" cy="100"/>
+                    </svg>
+                </div>`
+            };
+            return animaciones[numero] || '';
+        }
+
+        function mostrarProblemaDemo(numero) {
+            const p = problemasDemo[numero];
+            const animacion = getAnimacionProblema(numero);
+            const html = `
+                <div class="problema-header">
+                    <h3>${p.titulo}</h3>
+                    <span class="puntos">Puntaje: ${p.puntos} puntos</span>
+                </div>
+                <div class="problema-body">
+                    <div class="enunciado-box">
+                        <h4>📋 Enunciado</h4>
+                        <p>${p.enunciado}</p>
+                    </div>
+                    ${animacion}
+                    <div class="respuesta-box">
+                        <label>Tu Respuesta:</label>
+                        <input type="number" id="resp${numero}" step="0.01" placeholder="Ingresa el valor"
+                               value="${respuestasDemoLocal[numero] || ''}"
+                               oninput="guardarRespuestaLocal(${numero}, this.value)">
+                        <small>Unidad: <strong>${p.unidad}</strong></small>
+                    </div>
+                    <button class="btn btn-secondary" onclick="abrirModalDemo(${numero})">
+                        📎 Simular Upload Probatorio
+                    </button>
+                    <p style="margin-top: 1rem; color: #999; font-size: 0.9rem;">
+                        💡 Respuesta correcta (para referencia): ${p.solucion}
+                    </p>
+                </div>
+            `;
+            document.getElementById('areaPrincipal').innerHTML = html;
+        }
+
+        function abrirModalDemo(numero) {
+            document.getElementById('modalDemo').style.display = 'flex';
+            document.getElementById('modalDemo').dataset.problema = numero;
+        }
+
+        function cerrarModalDemo() {
+            document.getElementById('modalDemo').style.display = 'none';
+            document.getElementById('fileInputDemo').value = '';
+            document.getElementById('filePreviewDemo').innerHTML = '';
+        }
+
+        function manejarArchivoDemo(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const problema = parseInt(document.getElementById('modalDemo').dataset.problema);
+                probatoriosSubidos[problema] = true;
+                document.getElementById('filePreviewDemo').innerHTML = `
+                    <div class="file-info">
+                        <p>✓ Archivo seleccionado: <strong>${file.name}</strong></p>
+                        <p>Tamaño: ${(file.size / 1024).toFixed(2)} KB</p>
+                        <p style="color: var(--color-success); margin-top: 0.5rem;">
+                            ✓ Probatorio para Problema ${problema} registrado
+                        </p>
+                    </div>
+                `;
+                setTimeout(() => cerrarModalDemo(), 1500);
+            }
+        }
+
+        function siguienteAccion() {
+            if (fase === 1) {
+                // Validar que todos los 5 problemas tengan respuesta
+                const sinRespuesta = [];
+                for (let i = 1; i <= 5; i++) {
+                    if (!respuestasDemoLocal[i] || respuestasDemoLocal[i].trim() === '') {
+                        sinRespuesta.push(i);
+                    }
+                }
+
+                if (sinRespuesta.length > 0) {
+                    alert(`⚠️ Debes responder TODOS los problemas\n\nFaltan respuestas en: Problema(s) ${sinRespuesta.join(', ')}`);
+                    return;
+                }
+
+                // Validar que todos los 5 problemas tengan probatorio subido
+                const faltantes = [];
+                for (let i = 1; i <= 5; i++) {
+                    if (!probatoriosSubidos[i]) {
+                        faltantes.push(i);
+                    }
+                }
+
+                if (faltantes.length > 0) {
+                    alert(`⚠️ DEBES SUBIR TODOS LOS PROBATORIOS\n\nFaltan probatorios para los problemas: ${faltantes.join(', ')}\n\nLos estudiantes DEBEN subir PDF/JPG para cada uno de los 5 problemas antes de pasar a Teoría.`);
+                    return;
+                }
+
+                renderizarFase2();
+            } else {
+                terminarDemo();
+            }
+        }
+
+        function renderizarFase2() {
+            fase = 2;
+            preguntaActual = 1;
+            document.getElementById('faseTitulo').textContent = 'Fase 2: Teoría (DEMO)';
+            document.getElementById('estadoProgreso').textContent = 'Fase 2 - Pregunta ' + preguntaActual;
+
+            // Cambiar selector a números de preguntas
+            const html = preguntasTeoriaDemo.map((_, i) => `
+                <button class="problema-btn ${(i+1) == preguntaActual ? 'active' : ''}"
+                        onclick="cambiarPregunta(${i+1})">
+                    <span class="numero">${i+1}</span>
+                    <span class="titulo">P${i+1}</span>
+                </button>
+            `).join('');
+            document.getElementById('listaProblemas').innerHTML = html;
+
+            mostrarPreguntaDemo(preguntaActual);
+            document.getElementById('btnSiguiente').textContent = '✓ Terminar Examen';
+        }
+
+        function cambiarPregunta(numero) {
+            preguntaActual = numero;
+            mostrarPreguntaDemo(numero);
+            document.querySelectorAll('.problema-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.closest('.problema-btn').classList.add('active');
+        }
+
+        function mostrarPreguntaDemo(numero) {
+            const p = preguntasTeoriaDemo[numero - 1];
+            let html = `
+                <div class="pregunta-box">
+                    <h3>${p.pregunta}</h3>
+                    <div class="opciones">
+            `;
+
+            Object.entries(p.opciones).forEach(([key, valor]) => {
+                const seleccionada = localStorage.getItem(`respuestaTeoriaDemo_${numero}`) === key ? 'checked' : '';
+                html += `
+                    <label class="opcion">
+                        <input type="radio" name="preg${numero}" value="${key}" ${seleccionada}
+                               onchange="guardarRespuestaTeoriaDemo(${numero}, '${key}')">
+                        <span class="letra">${key.toUpperCase()}</span>
+                        <span class="texto">${valor}</span>
+                    </label>
+                `;
+            });
+
+            html += `
+                    </div>
+                    <p style="margin-top: 1.5rem; color: #999; font-size: 0.9rem;">
+                        💡 Respuesta correcta (para referencia): <strong>${p.correcta.toUpperCase()}</strong>
+                    </p>
+                </div>
+            `;
+
+            document.getElementById('areaPrincipal').innerHTML = html;
+        }
+
+        function iniciarTimer() {
+            setInterval(() => {
+                if (tiempoRestante > 0) {
+                    tiempoRestante--;
+                    const h = Math.floor(tiempoRestante / 3600);
+                    const m = Math.floor((tiempoRestante % 3600) / 60);
+                    const s = tiempoRestante % 60;
+                    document.getElementById('timerDisplay').textContent =
+                        `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+                }
+            }, 1000);
+        }
+
+        function terminarDemo() {
+            // Validar que todas las preguntas de teoría estén respondidas (Fase 2)
+            if (fase === 2) {
+                const sinRespuesta = [];
+                for (let i = 1; i <= totalPreguntas; i++) {
+                    const respuesta = localStorage.getItem(`respuestaTeoriaDemo_${i}`);
+                    if (!respuesta) {
+                        sinRespuesta.push(i);
+                    }
+                }
+
+                if (sinRespuesta.length > 0) {
+                    alert(`⚠️ Debes responder TODAS las preguntas\n\nFaltan respuestas en: Pregunta(s) ${sinRespuesta.join(', ')}`);
+                    return;
+                }
+            }
+
+            const html = `
+                <div style="text-align: center; padding: 3rem;">
+                    <h2>✓ Demo Completado</h2>
+                    <p style="font-size: 1.2rem; margin: 1rem 0;">¡Así se vería un examen real!</p>
+
+                    <div class="info-box" style="margin: 2rem 0; max-width: 600px; margin-left: auto; margin-right: auto;">
+                        <h3>¿Qué viste en esta demo?</h3>
+                        <ul style="text-align: left;">
+                            <li>✓ Interface de login</li>
+                            <li>✓ Navegación entre problemas</li>
+                            <li>✓ Campos para respuestas numéricas</li>
+                            <li>✓ Simulación de upload de archivos</li>
+                            <li>✓ Timer en tiempo real</li>
+                            <li>✓ Transición a Fase 2 (Teoría)</li>
+                            <li>✓ Preguntas de opción múltiple</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-box" style="background-color: #e8f5e9; max-width: 600px; margin-left: auto; margin-right: auto;">
+                        <h3>En la versión REAL:</h3>
+                        <ul style="text-align: left;">
+                            <li>✓ Los datos se guardan en Supabase</li>
+                            <li>✓ Preguntas diagnósticas si fallan problemas</li>
+                            <li>✓ Cálculo automático de puntos</li>
+                            <li>✓ Panel de admin para liberar calificaciones</li>
+                            <li>✓ Descarga de Excel con resultados</li>
+                            <li>✓ Timer sincronizado con servidor</li>
+                        </ul>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="location.reload()" style="margin-top: 2rem;">
+                        🔄 Reiniciar Demo
+                    </button>
+                    <button class="btn btn-secondary" onclick="window.location.href='index.html'" style="margin-top: 1rem;">
+                        → Ir a Login Real
+                    </button>
+                </div>
+            `;
+            document.getElementById('areaPrincipal').innerHTML = html;
+            document.getElementById('selectorProblemas').style.display = 'none';
+            document.getElementById('btnSiguiente').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

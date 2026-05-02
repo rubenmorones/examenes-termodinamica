@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Examen - Fase 1: Problemas</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="examen-container">
+        <!-- HEADER CON TIMER -->
+        <header class="examen-header">
+            <div class="header-left">
+                <h2>Fase 1: Problemas</h2>
+                <p id="matriculaDisplay"></p>
+            </div>
+            <div class="timer-box">
+                <div id="timerDisplay" class="timer">7:00:00</div>
+                <p>Tiempo restante</p>
+            </div>
+        </header>
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <div class="examen-content">
+            <!-- SELECTOR DE PROBLEMAS -->
+            <aside class="problema-selector">
+                <h3>Problemas</h3>
+                <div class="problema-list">
+                    <button class="problema-btn active" data-problema="1" onclick="mostrarProblema(1)">
+                        <span class="numero">1</span>
+                        <span class="titulo">Segunda Ley</span>
+                        <span class="status" id="status-1">●</span>
+                    </button>
+                    <button class="problema-btn" data-problema="2" onclick="mostrarProblema(2)">
+                        <span class="numero">2</span>
+                        <span class="titulo">Máquina Térmica</span>
+                        <span class="status" id="status-2">●</span>
+                    </button>
+                    <button class="problema-btn" data-problema="3" onclick="mostrarProblema(3)">
+                        <span class="numero">3</span>
+                        <span class="titulo">Entropía</span>
+                        <span class="status" id="status-3">●</span>
+                    </button>
+                    <button class="problema-btn" data-problema="4" onclick="mostrarProblema(4)">
+                        <span class="numero">4</span>
+                        <span class="titulo">Throttling</span>
+                        <span class="status" id="status-4">●</span>
+                    </button>
+                    <button class="problema-btn" data-problema="5" onclick="mostrarProblema(5)">
+                        <span class="numero">5</span>
+                        <span class="titulo">Compresión agua</span>
+                        <span class="status" id="status-5">●</span>
+                    </button>
+                </div>
+
+                <div class="progress-box">
+                    <p>Probatorios subidos: <strong id="probatoriosCount">0/5</strong></p>
+                </div>
+            </aside>
+
+            <!-- ÁREA DE PROBLEMA -->
+            <main class="problema-area">
+                <div id="problemaContent"></div>
+            </main>
+        </div>
+
+        <!-- FOOTER -->
+        <footer class="examen-footer">
+            <button id="btnGuardarProblemas" class="btn btn-success" onclick="terminarFase1()">
+                ✓ Terminar Problemas e Ir a Teoría
+            </button>
+            <small id="ultimaGuarda">Última guardada: hace unos momentos</small>
+        </footer>
+    </div>
+
+    <!-- Modal para subir probatorio -->
+    <div id="modalProbatorio" class="modal" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitulo">Subir Probatorio - Problema 1</h3>
+                <button class="close" onclick="cerrarModalProbatorio()">✕</button>
+            </div>
+            <div class="modal-body">
+                <p>Sube una imagen o PDF como probatorio de tu solución</p>
+                <div class="file-upload">
+                    <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png" onchange="manejarArchivo(event)">
+                    <label for="fileInput" class="file-label">
+                        📎 Seleccionar archivo (PDF, JPG, PNG)
+                    </label>
+                </div>
+                <div id="filePreview" style="margin-top:15px;"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="cerrarModalProbatorio()">Cancelar</button>
+                <button id="btnSubirArchivo" class="btn btn-primary" onclick="subirProbatorio()" disabled>
+                    Subir Probatorio
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estilos de Animaciones -->
+    <style>
+        /* Animaciones de ingeniería para problemas */
+        .animation-container {
+            margin: 1.5rem 0;
+            display: flex;
+            justify-content: center;
+            background: rgba(136, 68, 255, 0.05);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid rgba(136, 68, 255, 0.2);
+        }
+
+        svg {
+            width: 100%;
+            max-width: 300px;
+            height: auto;
+        }
+
+        @keyframes particle-float {
+            0%, 100% { opacity: 1; transform: translate(0, 0); }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes particle-1 {
+            0% { cx: 100; cy: 100; r: 3; }
+            100% { cx: 180; cy: 40; r: 5; opacity: 0; }
+        }
+
+        @keyframes particle-2 {
+            0% { cx: 100; cy: 100; r: 3; }
+            100% { cx: 20; cy: 30; r: 5; opacity: 0; }
+        }
+
+        @keyframes particle-3 {
+            0% { cx: 100; cy: 100; r: 3; }
+            100% { cx: 180; cy: 160; r: 5; opacity: 0; }
+        }
+
+        @keyframes particle-4 {
+            0% { cx: 100; cy: 100; r: 3; }
+            100% { cx: 40; cy: 170; r: 5; opacity: 0; }
+        }
+
+        @keyframes heat-flow {
+            0% { strokeDashoffset: 100; }
+            100% { strokeDashoffset: 0; }
+        }
+
+        @keyframes compress {
+            0%, 100% { transform: scaleX(1); }
+            50% { transform: scaleX(0.7); }
+        }
+
+        @keyframes expand {
+            0%, 100% { r: 30; }
+            50% { r: 50; }
+        }
+
+        @keyframes valve-flow {
+            0% { cx: 20; }
+            100% { cx: 280; }
+        }
+
+        @keyframes molecule-compress {
+            0% { cx: 50; }
+            50% { cx: 80; }
+            100% { cx: 120; }
+        }
+
+        .particle {
+            fill: #8844ff;
+            filter: drop-shadow(0 0 4px rgba(136, 68, 255, 0.8));
+        }
+
+        .heat-arrow {
+            stroke: #00ffff;
+            stroke-width: 2;
+            fill: none;
+            stroke-dasharray: 100;
+            filter: drop-shadow(0 0 6px rgba(0, 255, 255, 0.6));
+        }
+
+        .gas-molecule {
+            fill: #ff006e;
+            filter: drop-shadow(0 0 4px rgba(255, 0, 110, 0.6));
+        }
+
+        .container-rect {
+            stroke: #00ffff;
+            stroke-width: 2;
+            fill: none;
+            filter: drop-shadow(0 0 6px rgba(0, 255, 255, 0.4));
+        }
+
+        .label-text {
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            fill: #00ffff;
+            text-anchor: middle;
+        }
+
+        .hot-temp { fill: #ff006e; }
+        .cold-temp { fill: #0099ff; }
+    </style>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/utils.js"></script>
+
+    <script>
+        let problemaActual = 1;
+        let tiempoInicio = null;
+        let tiempoExtendido = 7; // horas
+        let archivoSeleccionado = null;
+        let problemaActualSubida = 1;
+
+        // Variables para guardar respuestas
+        let respuestas = {
+            1: '', 2: '', 3: '', 4: '', 5: ''
+        };
+
+        // Cargar respuestas guardadas en localStorage
+        function cargarRespuestasLocales() {
+            const guardadas = localStorage.getItem('respuestasExamen');
+            if (guardadas) {
+                respuestas = JSON.parse(guardadas);
+            }
+        }
+
+        // Problemas (datos simplificados - en producción vienen de EXAMENES_COMPLETOS_28.js)
+        const problemas = {
+            1: {
+                titulo: "Problema 1: Segunda Ley de la Termodinámica",
+                enunciado: "Se realiza un experimento donde se transfieren 5200 J de calor a un sistema...",
+                solucion: "24.82",
+                tolerancia: 0.07,
+                unidad: "J/K"
+            },
+            2: {
+                titulo: "Problema 2: Máquina Térmica",
+                enunciado: "Una máquina térmica opera entre dos depósitos...",
+                solucion: "35.5",
+                tolerancia: 0.07,
+                unidad: "%"
+            },
+            3: {
+                titulo: "Problema 3: Entropía en Compresión",
+                enunciado: "Un gas ideal se comprime isotérmicamente...",
+                solucion: "45.2",
+                tolerancia: 0.07,
+                unidad: "J/K"
+            },
+            4: {
+                titulo: "Problema 4: Throttling",
+                enunciado: "Un fluido se expande a través de una válvula...",
+                solucion: "2.15",
+                tolerancia: 0.07,
+                unidad: "K"
+            },
+            5: {
+                titulo: "Problema 5: Compresión de Agua",
+                enunciado: "Se comprime agua isotérmicamente a 25°C...",
+                solucion: "15.8",
+                tolerancia: 0.07,
+                unidad: "cm³"
+            }
+        };
+
+        // Inicialización
+        window.addEventListener('load', function() {
+            let matricula = localStorage.getItem('matriculaActual');
+            if (!matricula) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Si es 111111, seleccionar una matrícula de otros estudiantes (primera vez)
+            if (matricula === '111111') {
+                let matAsignada = localStorage.getItem('matriculaProblemas111111');
+
+                if (!matAsignada) {
+                    // Primera vez: seleccionar aleatoriamente
+                    const otrosEstudiantes = [];
+                    for (let i = 1; i <= 28; i++) {
+                        otrosEstudiantes.push(2000000 + i); // 2001001 a 2001028
+                    }
+                    const numAleatorio = otrosEstudiantes[Math.floor(Math.random() * otrosEstudiantes.length)];
+                    matAsignada = numAleatorio.toString();
+                    localStorage.setItem('matriculaProblemas111111', matAsignada);
+                    console.log('🎯 PRIMERA VEZ: Se asignaron problemas de ' + matAsignada + ' al estudiante 111111');
+                } else {
+                    console.log('🔄 SESIÓN RECURRENTE: Usando mismos problemas de ' + matAsignada);
+                }
+
+                localStorage.setItem('matriculaParaProblemas', matAsignada);
+            }
+
+            document.getElementById('matriculaDisplay').textContent = 'Matrícula: ' + matricula;
+
+            // Cargar respuestas guardadas localmente
+            cargarRespuestasLocales();
+
+            // Obtener tiempo extendido del admin
+            cargarDatosEstudiante(matricula);
+
+            // Mostrar primer problema
+            mostrarProblema(1);
+
+            // Iniciar timer
+            iniciarTimer();
+
+            // Guardado automático cada 30 segundos
+            setInterval(guardarAutomaticamente, 30000);
+        });
+
+        async function cargarDatosEstudiante(matricula) {
+            try {
+                const { data } = await supabaseClient
+                    .from('estudiantes')
+                    .select('tiempo_extendido')
+                    .eq('matricula', matricula)
+                    .single();
+
+                if (data) {
+                    tiempoExtendido = data.tiempo_extendido || 7;
+                }
+            } catch (err) {
+                console.log('Error al cargar datos:', err);
+            }
+        }
+
+        function getAnimacionProblema(numero) {
+            const animaciones = {
+                1: `<div class="animation-container">
+                    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <style>
+                                .p1 { animation: particle-1 3s ease-in infinite; }
+                                .p2 { animation: particle-2 3.2s ease-in infinite; }
+                                .p3 { animation: particle-3 3.4s ease-in infinite; }
+                                .p4 { animation: particle-4 3.6s ease-in infinite; }
+                            </style>
+                        </defs>
+                        <circle cx="100" cy="100" r="40" class="container-rect" fill="rgba(136,68,255,0.1)"/>
+                        <circle class="particle p1" r="3"/>
+                        <circle class="particle p2" r="3"/>
+                        <circle class="particle p3" r="3"/>
+                        <circle class="particle p4" r="3"/>
+                    </svg>
+                </div>`,
+
+                2: `<div class="animation-container">
+                    <svg viewBox="0 0 300 150" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <style>
+                                .hot-flow { animation: heat-flow 2s linear infinite; }
+                                .cold-flow { animation: heat-flow 2s linear infinite 0.5s; }
+                            </style>
+                        </defs>
+                        <!-- Depósito caliente -->
+                        <rect x="20" y="20" width="60" height="60" class="container-rect" fill="#ff006e" opacity="0.1"/>
+
+                        <!-- Máquina térmica -->
+                        <circle cx="150" cy="50" r="30" class="container-rect" fill="rgba(0,255,255,0.1)"/>
+
+                        <!-- Depósito frío -->
+                        <rect x="220" y="20" width="60" height="60" class="container-rect" fill="#0099ff" opacity="0.1"/>
+
+                        <!-- Flujo de energía -->
+                        <path class="heat-arrow hot-flow" d="M 80 50 Q 115 35 120 50"/>
+                        <path class="heat-arrow cold-flow" d="M 180 50 Q 215 65 220 50"/>
+                    </svg>
+                </div>`,
+
+                3: `<div class="animation-container">
+                    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <style>
+                                .gas { animation: expand 3s ease-in-out infinite; }
+                            </style>
+                        </defs>
+                        <!-- Cilindro -->
+                        <rect x="30" y="50" width="140" height="100" class="container-rect" fill="rgba(136,68,255,0.05)"/>
+
+                        <!-- Gas comprimiendo/expandiendo -->
+                        <circle class="gas-molecule gas" cx="100" cy="100" r="35"/>
+                    </svg>
+                </div>`,
+
+                4: `<div class="animation-container">
+                    <svg viewBox="0 0 300 150" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <style>
+                                .droplet { animation: valve-flow 3s ease-in-out infinite; }
+                            </style>
+                        </defs>
+                        <!-- Tubo de entrada -->
+                        <rect x="10" y="60" width="40" height="30" class="container-rect"/>
+
+                        <!-- Válvula -->
+                        <circle cx="80" cy="75" r="15" class="container-rect"/>
+                        <line x1="65" y1="75" x2="95" y2="75" stroke="#00ffff" stroke-width="2"/>
+
+                        <!-- Tubo de salida -->
+                        <rect x="250" y="60" width="40" height="30" class="container-rect"/>
+
+                        <!-- Fluido pasando -->
+                        <circle class="gas-molecule droplet" cx="80" cy="75" r="4"/>
+                    </svg>
+                </div>`,
+
+                5: `<div class="animation-container">
+                    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <style>
+                                .mol1 { animation: molecule-compress 4s ease-in-out infinite; }
+                                .mol2 { animation: molecule-compress 4s ease-in-out infinite 0.3s; }
+                                .mol3 { animation: molecule-compress 4s ease-in-out infinite 0.6s; }
+                            </style>
+                        </defs>
+                        <!-- Contenedor -->
+                        <rect x="30" y="40" width="140" height="120" class="container-rect" fill="rgba(0,153,255,0.1)"/>
+
+                        <!-- Moléculas comprimiéndose -->
+                        <circle class="gas-molecule mol1" r="4" cy="80"/>
+                        <circle class="gas-molecule mol2" r="4" cy="120"/>
+                        <circle class="gas-molecule mol3" r="4" cy="100"/>
+                    </svg>
+                </div>`
+            };
+            return animaciones[numero] || '';
+        }
+
+        function mostrarProblema(numero) {
+            problemaActual = numero;
+
+            // Actualizar botones
+            document.querySelectorAll('.problema-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-problema="${numero}"]`).classList.add('active');
+
+            // Renderizar contenido
+            const p = problemas[numero];
+            const animacion = getAnimacionProblema(numero);
+            const html = `
+                <div class="problema-header">
+                    <h3>${p.titulo}</h3>
+                    <span class="puntos">Puntaje: ${numero === 5 ? '10' : '20'} puntos</span>
+                </div>
+
+                <div class="problema-body">
+                    <div class="enunciado-box">
+                        <h4>📋 Enunciado</h4>
+                        <p>${p.enunciado}</p>
+                    </div>
+
+                    ${animacion}
+
+                    <div class="respuesta-box">
+                        <label for="respuesta${numero}">Tu Respuesta:</label>
+                        <input
+                            type="number"
+                            id="respuesta${numero}"
+                            step="0.01"
+                            placeholder="Ingresa el valor numérico"
+                            value="${respuestas[numero] || ''}"
+                            oninput="actualizarRespuesta(${numero}, this.value)"
+                        >
+                        <small>Unidad: <strong>${p.unidad}</strong></small>
+                    </div>
+
+                    <button class="btn btn-secondary" onclick="abrirModalProbatorio(${numero})">
+                        📎 Subir Probatorio (PDF/JPG)
+                    </button>
+
+                    <div id="resultado${numero}" class="resultado-box" style="display:none;"></div>
+                </div>
+            `;
+
+            document.getElementById('problemaContent').innerHTML = html;
+
+            // Restaurar valor guardado
+            const input = document.getElementById(`respuesta${numero}`);
+            if (input && respuestas[numero]) {
+                input.value = respuestas[numero];
+            }
+        }
+
+        function actualizarRespuesta(numero, valor) {
+            respuestas[numero] = valor;
+            // Guardar en localStorage para persistencia local
+            localStorage.setItem('respuestasExamen', JSON.stringify(respuestas));
+        }
+
+        function iniciarTimer() {
+            tiempoInicio = Date.now();
+            const tiempoMs = tiempoExtendido * 3600000; // horas a ms
+
+            const interval = setInterval(() => {
+                const tiempoTranscurrido = Date.now() - tiempoInicio;
+                const tiempoRestante = tiempoMs - tiempoTranscurrido;
+
+                if (tiempoRestante <= 0) {
+                    clearInterval(interval);
+                    terminarFase1();
+                    return;
+                }
+
+                mostrarTiempo(tiempoRestante);
+            }, 1000);
+        }
+
+        function mostrarTiempo(ms) {
+            const segundos = Math.floor(ms / 1000);
+            const horas = Math.floor(segundos / 3600);
+            const minutos = Math.floor((segundos % 3600) / 60);
+            const secs = segundos % 60;
+
+            const display = `${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            document.getElementById('timerDisplay').textContent = display;
+
+            // Alerta en rojo si < 30 minutos
+            if (segundos < 1800) {
+                document.getElementById('timerDisplay').style.color = '#e74c3c';
+            }
+        }
+
+        function abrirModalProbatorio(numero) {
+            problemaActualSubida = numero;
+            document.getElementById('modalTitulo').textContent = `Subir Probatorio - Problema ${numero}`;
+            document.getElementById('modalProbatorio').style.display = 'flex';
+        }
+
+        function cerrarModalProbatorio() {
+            document.getElementById('modalProbatorio').style.display = 'none';
+            archivoSeleccionado = null;
+            document.getElementById('filePreview').innerHTML = '';
+            document.getElementById('btnSubirArchivo').disabled = true;
+        }
+
+        function manejarArchivo(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            archivoSeleccionado = file;
+            document.getElementById('btnSubirArchivo').disabled = false;
+
+            const preview = document.getElementById('filePreview');
+            preview.innerHTML = `
+                <div class="file-info">
+                    <p>✓ Archivo seleccionado: <strong>${file.name}</strong></p>
+                    <p>Tamaño: ${(file.size / 1024).toFixed(2)} KB</p>
+                </div>
+            `;
+        }
+
+        async function subirProbatorio() {
+            if (!archivoSeleccionado) return;
+
+            const matricula = localStorage.getItem('matriculaActual');
+            const nombreArchivo = `${matricula}-P${problemaActualSubida}-${Date.now()}`;
+
+            try {
+                const { data, error } = await supabaseClient.storage
+                    .from('probatorios')
+                    .upload(nombreArchivo, archivoSeleccionado);
+
+                if (error) throw error;
+
+                // Guardar referencia en BD
+                await supabaseClient
+                    .from('probatorios')
+                    .insert([{
+                        matricula: matricula,
+                        problema_id: problemaActualSubida,
+                        archivo_url: data.path
+                    }]);
+
+                alert('✓ Probatorio subido correctamente');
+                cerrarModalProbatorio();
+                actualizarContadorProbatorios();
+
+            } catch (err) {
+                alert('Error al subir: ' + err.message);
+            }
+        }
+
+        async function actualizarContadorProbatorios() {
+            const matricula = localStorage.getItem('matriculaActual');
+            const { data } = await supabaseClient
+                .from('probatorios')
+                .select('id')
+                .eq('matricula', matricula);
+
+            document.getElementById('probatoriosCount').textContent = `${data?.length || 0}/5`;
+        }
+
+        async function guardarAutomaticamente() {
+            const matricula = localStorage.getItem('matriculaActual');
+
+            // Guardar respuestas
+            for (let i = 1; i <= 5; i++) {
+                if (respuestas[i]) {
+                    await supabaseClient
+                        .from('respuestas')
+                        .upsert({
+                            matricula: matricula,
+                            problema_id: i,
+                            respuesta_numerica: parseFloat(respuestas[i])
+                        }, { onConflict: 'matricula,problema_id' });
+                }
+            }
+
+            document.getElementById('ultimaGuarda').textContent = 'Última guardada: ' + new Date().toLocaleTimeString();
+        }
+
+        async function terminarFase1() {
+            const matricula = localStorage.getItem('matriculaActual');
+
+            // Verificar que todos los problemas tengan respuesta
+            const sinRespuesta = [];
+            for (let i = 1; i <= 5; i++) {
+                if (!respuestas[i] || respuestas[i].trim() === '') {
+                    sinRespuesta.push(i);
+                }
+            }
+
+            if (sinRespuesta.length > 0) {
+                alert(`⚠️ Debes responder TODOS los problemas\n\nFaltan respuestas en: Problema(s) ${sinRespuesta.join(', ')}`);
+                return;
+            }
+
+            // Verificar que todos los probatorios estén subidos
+            const { data: probatorios } = await supabaseClient
+                .from('probatorios')
+                .select('id')
+                .eq('matricula', matricula);
+
+            if (!probatorios || probatorios.length < 5) {
+                alert('⚠️ Debes subir los 5 probatorios antes de continuar');
+                return;
+            }
+
+            // Guardar respuestas finales
+            await guardarAutomaticamente();
+
+            // Cambiar a fase 2
+            localStorage.setItem('fase', '2');
+            window.location.href = 'teoria.html';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DEMO - Panel Administrativo</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .demo-banner {
+            background-color: #fff3cd;
+            border-left: 4px solid #f39c12;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 4px;
+        }
+        .demo-banner strong {
+            color: #f39c12;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- HEADER -->
+        <header class="admin-header">
+            <h1>⚙️ Panel Administrativo - DEMO</h1>
+            <div class="admin-info">
+                <p id="usuarioInfo">Administrador (DEMO)</p>
+                <button class="btn btn-secondary" onclick="volverAlLogin()">← Salir</button>
+            </div>
+        </header>
+
+        <!-- BANNER DEMO -->
+        <div class="demo-banner">
+            <strong>⚠️ DEMOSTRACIÓN:</strong> Los datos son simulados. Las calificaciones NO se guardan en una base de datos real.
+        </div>
+
+        <!-- NAVEGACIÓN -->
+        <nav class="admin-nav">
+            <button class="nav-btn active" onclick="mostrarSeccion('calificaciones')">
+                📊 Calificaciones
+            </button>
+            <button class="nav-btn" onclick="mostrarSeccion('estudiantes')">
+                👥 Estudiantes
+            </button>
+            <button class="nav-btn" onclick="mostrarSeccion('tiempos')">
+                ⏱️ Extender Tiempo
+            </button>
+            <button class="nav-btn" onclick="mostrarSeccion('estadisticas')">
+                📈 Estadísticas
+            </button>
+            <button class="nav-btn" onclick="mostrarSeccion('exportar')">
+                📥 Descargar
+            </button>
+        </nav>
+
+        <!-- CONTENIDO -->
+        <main class="admin-content">
+            <!-- CALIFICACIONES -->
+            <section id="seccion-calificaciones" class="seccion active">
+                <h2>Calificaciones de Estudiantes</h2>
+
+                <div class="filtros">
+                    <input type="text" id="filtroMatricula" placeholder="Buscar por matrícula..."
+                           onkeyup="filtrarTabla()">
+                    <select id="filtroEstado" onchange="filtrarTabla()">
+                        <option value="">Todos</option>
+                        <option value="liberada">Liberada</option>
+                        <option value="privada">Privada (No liberada)</option>
+                    </select>
+                </div>
+
+                <table class="tabla-calificaciones">
+                    <thead>
+                        <tr>
+                            <th>Matrícula</th>
+                            <th>Nombre</th>
+                            <th>P1 (20)</th>
+                            <th>P2 (20)</th>
+                            <th>P3 (20)</th>
+                            <th>P4 (20)</th>
+                            <th>P5 (10)</th>
+                            <th>Teoría (10)</th>
+                            <th>Total (100)</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaCalificaciones">
+                        <!-- Se llena con JavaScript -->
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- EXTENDER TIEMPO -->
+            <section id="seccion-tiempos" class="seccion">
+                <h2>Extender Tiempo de Examen</h2>
+
+                <div class="extender-tiempo-box">
+                    <div class="form-row">
+                        <select id="matriculaExtender" onchange="mostrarDatosEstudiante()">
+                            <option value="">Seleccionar estudiante...</option>
+                            ${estudiantesDemo.map(e => `<option value="${e.matricula}">${e.matricula} - ${e.nombre}</option>`).join('')}
+                        </select>
+                        <select id="horasExtender">
+                            <option value="7">7 horas (por defecto)</option>
+                            <option value="8">8 horas</option>
+                            <option value="9">9 horas</option>
+                            <option value="10">10 horas</option>
+                            <option value="12">12 horas</option>
+                            <option value="14">14 horas</option>
+                            <option value="16">16 horas</option>
+                            <option value="18">18 horas</option>
+                            <option value="20">20 horas</option>
+                            <option value="24">24 horas (1 día)</option>
+                            <option value="30">30 horas</option>
+                            <option value="36">36 horas (1.5 días)</option>
+                            <option value="48">48 horas (2 días)</option>
+                        </select>
+                        <textarea id="razonExtender" placeholder="Razón (ej: Estudiante con discapacidad, necesita más tiempo...)"></textarea>
+                        <button class="btn btn-warning" onclick="extenderTiempo()">⏱️ Extender Tiempo</button>
+                    </div>
+                </div>
+
+                <div id="datosEstudianteExtension" style="margin-top: 2rem; display: none;">
+                    <h3>Información del Estudiante</h3>
+                    <div class="info-box">
+                        <p><strong>Matrícula:</strong> <span id="matExtension">-</span></p>
+                        <p><strong>Nombre:</strong> <span id="nomExtension">-</span></p>
+                        <p><strong>Tiempo actual:</strong> <span id="tiempoActual">7 horas</span></p>
+                        <p><strong>Estado:</strong> <span id="estadoExtension">-</span></p>
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 2rem;">Historial de Extensiones</h3>
+                <table class="tabla-extensiones">
+                    <thead>
+                        <tr>
+                            <th>Matrícula</th>
+                            <th>Nombre</th>
+                            <th>Horas Originales</th>
+                            <th>Horas Extendidas</th>
+                            <th>Razón</th>
+                            <th>Fecha</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaExtensiones">
+                        <!-- Se llena con JavaScript -->
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- ESTUDIANTES -->
+            <section id="seccion-estudiantes" class="seccion">
+                <h2>Gestión de Estudiantes</h2>
+                <table class="tabla-estudiantes">
+                    <thead>
+                        <tr>
+                            <th>Matrícula</th>
+                            <th>Nombre</th>
+                            <th>Estado</th>
+                            <th>Calificación</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaEstudiantes">
+                        <!-- Se llena con JavaScript -->
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- ESTADÍSTICAS -->
+            <section id="seccion-estadisticas" class="seccion">
+                <h2>Estadísticas Generales</h2>
+                <div class="estadisticas-box">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <p id="totalEstudiantes">0</p>
+                            <small>Estudiantes totales</small>
+                        </div>
+                        <div class="stat-card">
+                            <p id="examenesCompletos">0</p>
+                            <small>Exámenes completados</small>
+                        </div>
+                        <div class="stat-card">
+                            <p id="calificacionesLiberadas">0</p>
+                            <small>Calificaciones liberadas</small>
+                        </div>
+                        <div class="stat-card">
+                            <p id="promedio">0.0</p>
+                            <small>Promedio general</small>
+                        </div>
+                        <div class="stat-card">
+                            <p id="calificacionAlta">0</p>
+                            <small>Calificación más alta</small>
+                        </div>
+                        <div class="stat-card">
+                            <p id="calificacionBaja">0</p>
+                            <small>Calificación más baja</small>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- DESCARGAR/EXPORTAR -->
+            <section id="seccion-exportar" class="seccion">
+                <h2>Descargar Datos</h2>
+
+                <div class="exportar-opciones">
+                    <button class="btn btn-primary" onclick="descargarCSV()">
+                        📥 Descargar Calificaciones (CSV/Excel)
+                    </button>
+                </div>
+
+                <div class="info-box" style="margin-top: 2rem;">
+                    <h3>¿Cómo funciona en la versión REAL?</h3>
+                    <ol>
+                        <li><strong>Estudiante completa examen</strong> → Responde 5 problemas + teoría</li>
+                        <li><strong>Sistema califica automáticamente</strong> → Valida respuestas y calcula puntos</li>
+                        <li><strong>Admin ve calificaciones privadas</strong> → Con botón "Liberar"</li>
+                        <li><strong>Admin libera calificación</strong> → Estudiante puede ver su nota</li>
+                        <li><strong>Estudiante ve su puntuación</strong> → Después de liberada por admin</li>
+                    </ol>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="js/utils.js"></script>
+    <script>
+        // Historial de extensiones de tiempo
+        let extensionesHistorial = [];
+
+        // DATOS DE DEMO - 28 estudiantes con calificaciones simuladas
+        const estudiantesDemo = [
+            { matricula: '2001001', nombre: 'Juan García', completado: true, p1: 18, p2: 16, p3: 19, p4: 17, p5: 9, teoria: 8, liberada: true },
+            { matricula: '2001002', nombre: 'María López', completado: true, p1: 20, p2: 19, p3: 20, p4: 19, p5: 10, teoria: 9, liberada: true },
+            { matricula: '2001003', nombre: 'Carlos Rodríguez', completado: true, p1: 12, p2: 14, p3: 11, p4: 13, p5: 6, teoria: 5, liberada: true },
+            { matricula: '2001004', nombre: 'Ana Martínez', completado: true, p1: 19, p2: 18, p3: 20, p4: 19, p5: 9, teoria: 9, liberada: false },
+            { matricula: '2001005', nombre: 'Pedro Sánchez', completado: true, p1: 15, p2: 16, p3: 14, p4: 15, p5: 7, teoria: 6, liberada: false },
+            { matricula: '2001006', nombre: 'Laura Díaz', completado: true, p1: 20, p2: 20, p3: 19, p4: 20, p5: 10, teoria: 10, liberada: true },
+            { matricula: '2001007', nombre: 'Roberto Flores', completado: true, p1: 10, p2: 9, p3: 8, p4: 10, p5: 4, teoria: 3, liberada: false },
+            { matricula: '2001008', nombre: 'Sofia Gutiérrez', completado: true, p1: 17, p2: 18, p3: 16, p4: 17, p5: 8, teoria: 7, liberada: true },
+            { matricula: '2001009', nombre: 'Miguel Ángel Torres', completado: true, p1: 14, p2: 15, p3: 13, p4: 14, p5: 6, teoria: 5, liberada: false },
+            { matricula: '2001010', nombre: 'Elena Vázquez', completado: true, p1: 19, p2: 19, p3: 20, p4: 18, p5: 9, teoria: 9, liberada: true },
+            { matricula: '2001011', nombre: 'David Moreno', completado: true, p1: 16, p2: 17, p3: 15, p4: 16, p5: 8, teoria: 7, liberada: false },
+            { matricula: '2001012', nombre: 'Isabel Hernández', completado: true, p1: 20, p2: 19, p3: 20, p4: 19, p5: 10, teoria: 9, liberada: true },
+            { matricula: '2001013', nombre: 'Francisco Jiménez', completado: true, p1: 11, p2: 12, p3: 10, p4: 11, p5: 5, teoria: 4, liberada: false },
+            { matricula: '2001014', nombre: 'Gabriela Castro', completado: true, p1: 18, p2: 19, p3: 17, p4: 18, p5: 9, teoria: 8, liberada: true },
+            { matricula: '2001015', nombre: 'Antonio Ruiz', completado: true, p1: 13, p2: 14, p3: 12, p4: 13, p5: 6, teoria: 5, liberada: false },
+            { matricula: '2001016', nombre: 'Valentina Iglesias', completado: true, p1: 19, p2: 20, p3: 19, p4: 20, p5: 10, teoria: 9, liberada: true },
+            { matricula: '2001017', nombre: 'Sergio Álvarez', completado: true, p1: 15, p2: 15, p3: 14, p4: 14, p5: 7, teoria: 6, liberada: false },
+            { matricula: '2001018', nombre: 'Patricia Romero', completado: true, p1: 17, p2: 18, p3: 16, p4: 17, p5: 8, teoria: 7, liberada: true },
+            { matricula: '2001019', nombre: 'Enrique Martínez', completado: true, p1: 12, p2: 13, p3: 11, p4: 12, p5: 6, teoria: 5, liberada: false },
+            { matricula: '2001020', nombre: 'Marta González', completado: true, p1: 20, p2: 19, p3: 20, p4: 19, p5: 10, teoria: 9, liberada: true },
+            { matricula: '2001021', nombre: 'Javier López', completado: true, p1: 16, p2: 17, p3: 15, p4: 16, p5: 8, teoria: 7, liberada: false },
+            { matricula: '2001022', nombre: 'Catalina Fernández', completado: true, p1: 18, p2: 18, p3: 19, p4: 17, p5: 9, teoria: 8, liberada: true },
+            { matricula: '2001023', nombre: 'Álvaro Domínguez', completado: true, p1: 14, p2: 15, p3: 13, p4: 14, p5: 7, teoria: 6, liberada: false },
+            { matricula: '2001024', nombre: 'Raquel Pineda', completado: true, p1: 19, p2: 19, p3: 20, p4: 20, p5: 10, teoria: 9, liberada: true },
+            { matricula: '2001025', nombre: 'Gustavo Navarro', completado: true, p1: 15, p2: 16, p3: 14, p4: 15, p5: 7, teoria: 6, liberada: false },
+            { matricula: '2001026', nombre: 'Carmen Rodríguez', completado: true, p1: 17, p2: 17, p3: 18, p4: 16, p5: 8, teoria: 7, liberada: true },
+            { matricula: '2001027', nombre: 'Ramón García', completado: true, p1: 13, p2: 14, p3: 12, p4: 13, p5: 6, teoria: 5, liberada: false },
+            { matricula: '2001028', nombre: 'Adriana Cortés', completado: true, p1: 20, p2: 20, p3: 19, p4: 20, p5: 10, teoria: 9, liberada: true },
+        ];
+
+        // Inicialización
+        window.addEventListener('load', function() {
+            cargarDatos();
+        });
+
+        function cargarDatos() {
+            cargarCalificaciones();
+            cargarEstudiantes();
+            cargarEstadisticas();
+        }
+
+        function cargarCalificaciones() {
+            const tbody = document.getElementById('tablaCalificaciones');
+            tbody.innerHTML = estudiantesDemo.map(est => {
+                const total = est.p1 + est.p2 + est.p3 + est.p4 + est.p5 + est.teoria;
+                return `
+                    <tr>
+                        <td>${est.matricula}</td>
+                        <td>${est.nombre}</td>
+                        <td>${est.p1}</td>
+                        <td>${est.p2}</td>
+                        <td>${est.p3}</td>
+                        <td>${est.p4}</td>
+                        <td>${est.p5}</td>
+                        <td>${est.teoria}</td>
+                        <td><strong>${total}</strong></td>
+                        <td>${est.liberada ? '✓ Liberada' : '🔒 Privada'}</td>
+                        <td>
+                            <button class="btn-pequeño" onclick="toggleLiberar('${est.matricula}')">
+                                ${est.liberada ? 'Ocultar' : 'Liberar'}
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function cargarEstudiantes() {
+            const tbody = document.getElementById('tablaEstudiantes');
+            tbody.innerHTML = estudiantesDemo.map(est => {
+                const total = est.p1 + est.p2 + est.p3 + est.p4 + est.p5 + est.teoria;
+                const estado = est.liberada ? '✓ Liberada' : '🔒 Privada';
+                return `
+                    <tr>
+                        <td>${est.matricula}</td>
+                        <td>${est.nombre}</td>
+                        <td>${estado}</td>
+                        <td><strong>${total}/100</strong></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function cargarEstadisticas() {
+            const total = estudiantesDemo.length;
+            const completados = estudiantesDemo.filter(e => e.completado).length;
+            const liberadas = estudiantesDemo.filter(e => e.liberada).length;
+
+            const calificaciones = estudiantesDemo.map(e => e.p1 + e.p2 + e.p3 + e.p4 + e.p5 + e.teoria);
+            const promedio = (calificaciones.reduce((a, b) => a + b, 0) / calificaciones.length).toFixed(1);
+            const maxima = Math.max(...calificaciones);
+            const minima = Math.min(...calificaciones);
+
+            document.getElementById('totalEstudiantes').textContent = total;
+            document.getElementById('examenesCompletos').textContent = completados;
+            document.getElementById('calificacionesLiberadas').textContent = liberadas;
+            document.getElementById('promedio').textContent = promedio;
+            document.getElementById('calificacionAlta').textContent = maxima;
+            document.getElementById('calificacionBaja').textContent = minima;
+        }
+
+        function toggleLiberar(matricula) {
+            const estudiante = estudiantesDemo.find(e => e.matricula === matricula);
+            if (estudiante) {
+                estudiante.liberada = !estudiante.liberada;
+                cargarDatos();
+                mostrarNotificacion(
+                    estudiante.liberada
+                        ? `✓ Calificación de ${estudiante.nombre} LIBERADA`
+                        : `🔒 Calificación de ${estudiante.nombre} OCULTADA`,
+                    estudiante.liberada ? 'exito' : 'info'
+                );
+            }
+        }
+
+        function mostrarSeccion(seccion) {
+            document.querySelectorAll('.seccion').forEach(s => {
+                s.classList.remove('active');
+            });
+            document.getElementById(`seccion-${seccion}`).classList.add('active');
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        function filtrarTabla() {
+            const matricula = document.getElementById('filtroMatricula').value.toLowerCase();
+            const estado = document.getElementById('filtroEstado').value;
+            const filas = document.querySelectorAll('#tablaCalificaciones tr');
+
+            filas.forEach(fila => {
+                const mat = fila.cells[0].textContent.toLowerCase();
+                const est = fila.cells[9].textContent;
+
+                const coincideMatricula = mat.includes(matricula);
+                const coincideEstado = !estado ||
+                    (estado === 'liberada' && est.includes('✓')) ||
+                    (estado === 'privada' && est.includes('🔒'));
+
+                fila.style.display = coincideMatricula && coincideEstado ? '' : 'none';
+            });
+        }
+
+        function descargarCSV() {
+            let csv = 'Matrícula,Nombre,P1,P2,P3,P4,P5,Teoría,Total,Estado\n';
+            csv += estudiantesDemo.map(e => {
+                const total = e.p1 + e.p2 + e.p3 + e.p4 + e.p5 + e.teoria;
+                const estado = e.liberada ? 'Liberada' : 'Privada';
+                return `${e.matricula},${e.nombre},${e.p1},${e.p2},${e.p3},${e.p4},${e.p5},${e.teoria},${total},${estado}`;
+            }).join('\n');
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'calificaciones.csv');
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            mostrarNotificacion('✓ Calificaciones descargadas como CSV', 'exito');
+        }
+
+        function volverAlLogin() {
+            window.location.href = 'index.html';
+        }
+
+        function mostrarDatosEstudiante() {
+            const matricula = document.getElementById('matriculaExtender').value;
+            if (!matricula) {
+                document.getElementById('datosEstudianteExtension').style.display = 'none';
+                return;
+            }
+
+            const estudiante = estudiantesDemo.find(e => e.matricula === matricula);
+            if (estudiante) {
+                document.getElementById('matExtension').textContent = estudiante.matricula;
+                document.getElementById('nomExtension').textContent = estudiante.nombre;
+                document.getElementById('tiempoActual').textContent = '7 horas';
+                document.getElementById('estadoExtension').textContent = estudiante.completado ? '✓ Completó examen' : '⏳ En progreso';
+                document.getElementById('datosEstudianteExtension').style.display = 'block';
+            }
+        }
+
+        function extenderTiempo() {
+            const matricula = document.getElementById('matriculaExtender').value;
+            const horas = document.getElementById('horasExtender').value;
+            const razon = document.getElementById('razonExtender').value;
+
+            if (!matricula) {
+                alert('⚠️ Selecciona un estudiante primero');
+                return;
+            }
+
+            const estudiante = estudiantesDemo.find(e => e.matricula === matricula);
+            if (estudiante) {
+                const extension = {
+                    matricula: matricula,
+                    nombre: estudiante.nombre,
+                    horasOriginales: 7,
+                    horasExtendidas: parseInt(horas),
+                    razon: razon || '(Sin especificar)',
+                    fecha: new Date().toLocaleString('es-MX')
+                };
+
+                extensionesHistorial.push(extension);
+                cargarHistorialExtensiones();
+
+                mostrarNotificacion(`✓ Tiempo extendido a ${horas} horas para ${estudiante.nombre}`, 'exito');
+
+                // Limpiar formulario
+                document.getElementById('matriculaExtender').value = '';
+                document.getElementById('horasExtender').value = '7';
+                document.getElementById('razonExtender').value = '';
+                document.getElementById('datosEstudianteExtension').style.display = 'none';
+            }
+        }
+
+        function cargarHistorialExtensiones() {
+            const tbody = document.getElementById('tablaExtensiones');
+            if (extensionesHistorial.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #999;">Sin extensiones registradas</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = extensionesHistorial.map(ext => `
+                <tr>
+                    <td>${ext.matricula}</td>
+                    <td>${ext.nombre}</td>
+                    <td>${ext.horasOriginales} h</td>
+                    <td><strong>${ext.horasExtendidas} h</strong></td>
+                    <td>${ext.razon}</td>
+                    <td>${ext.fecha}</td>
+                </tr>
+            `).join('');
+        }
+    </script>
+</body>
+</html>

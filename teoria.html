@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Examen - Fase 2: Teoría</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* Animación simple para sección de Teoría */
+        .teoria-animation {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+            opacity: 0.3;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        @keyframes rotate-smooth {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.6; }
+        }
+
+        .energia-cycle {
+            animation: rotate-smooth 8s linear infinite;
+        }
+
+        .pulse-effect {
+            animation: pulse-glow 3s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="examen-container">
+        <!-- HEADER -->
+        <header class="examen-header">
+            <div class="header-left">
+                <h2>Fase 2: Teoría</h2>
+                <p id="matriculaDisplay"></p>
+            </div>
+            <div class="timer-box">
+                <div id="timerDisplay" class="timer">7:00:00</div>
+                <p>Tiempo restante</p>
+            </div>
+        </header>
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <div class="examen-content" style="flex-direction: column;">
+            <!-- PROGRESO -->
+            <div class="progreso-box">
+                <div class="progreso-bar">
+                    <div id="progressBar" class="progreso-fill"></div>
+                </div>
+                <p id="progresText">Pregunta 1 de 10</p>
+            </div>
+
+            <!-- PREGUNTA ACTUAL -->
+            <main class="pregunta-area">
+                <div id="preguntaContent"></div>
+            </main>
+
+            <!-- NAVEGACIÓN -->
+            <div class="navegacion-preguntas">
+                <button id="btnAnterior" class="btn btn-secondary" onclick="preguntaAnterior()" disabled>
+                    ← Anterior
+                </button>
+                <div id="numerosPreguntas" class="numeros-preguntas"></div>
+                <button id="btnSiguiente" class="btn btn-secondary" onclick="siguientePregunta()">
+                    Siguiente →
+                </button>
+            </div>
+        </div>
+
+        <!-- FOOTER -->
+        <footer class="examen-footer">
+            <button id="btnTerminar" class="btn btn-success" onclick="terminarExamen()" style="display:none;">
+                ✓ Terminar Examen
+            </button>
+            <small id="ultimaGuarda">Última guardada: hace unos momentos</small>
+        </footer>
+    </div>
+
+    <!-- Animación de Teoría -->
+    <svg class="teoria-animation energia-cycle pulse-effect" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <!-- Ciclo termodinámico -->
+        <defs>
+            <style>
+                .ciclo-line {
+                    stroke: #00ffff;
+                    stroke-width: 2;
+                    fill: none;
+                    filter: drop-shadow(0 0 4px rgba(0, 255, 255, 0.8));
+                }
+                .ciclo-punto {
+                    fill: #8844ff;
+                    filter: drop-shadow(0 0 6px rgba(136, 68, 255, 0.8));
+                }
+            </style>
+        </defs>
+        <!-- Puntos del ciclo termodinámico -->
+        <circle cx="50" cy="20" r="3" class="ciclo-punto"/>
+        <circle cx="80" cy="50" r="3" class="ciclo-punto"/>
+        <circle cx="50" cy="80" r="3" class="ciclo-punto"/>
+        <circle cx="20" cy="50" r="3" class="ciclo-punto"/>
+        <!-- Líneas conectando -->
+        <path class="ciclo-line" d="M 50 20 Q 70 30 80 50"/>
+        <path class="ciclo-line" d="M 80 50 Q 70 70 50 80"/>
+        <path class="ciclo-line" d="M 50 80 Q 30 70 20 50"/>
+        <path class="ciclo-line" d="M 20 50 Q 30 30 50 20"/>
+    </svg>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/utils.js"></script>
+
+    <script>
+        let preguntaActual = 1;
+        let totalPreguntas = 10;
+        let tiempoInicio = null;
+        let tiempoExtendido = 7;
+        let respuestasTeoria = {};
+
+        // Cargar respuestas guardadas en localStorage
+        function cargarRespuestasGuardadas() {
+            const guardadas = localStorage.getItem('respuestasTeoriaLocal');
+            if (guardadas) {
+                respuestasTeoria = JSON.parse(guardadas);
+            }
+        }
+
+        // Preguntas de teoría (datos simplificados)
+        const preguntasTeoria = [
+            {
+                numero: 1,
+                tipo: 'teoria',
+                pregunta: '¿Cuál es la formulación correcta de la Segunda Ley en términos de entropía?',
+                opciones: {
+                    a: 'ΔS_universo = ΔS_sistema - ΔS_alrededores siempre',
+                    b: 'ΔS_universo = ΔS_sistema + ΔS_alrededores ≥ 0',
+                    c: 'ΔS_universo = ΔS_sistema + ΔS_alrededores < 0',
+                    d: 'ΔS_universo = 0 para todos los procesos',
+                    e: 'La entropía no tiene límites',
+                    f: 'La entropía solo aplica a líquidos',
+                    g: 'No hay relación entre sistema y alrededores'
+                },
+                correcta: 'b',
+                diagnostica: false
+            },
+            // ... más preguntas (por brevedad aquí solo muestro estructura)
+        ];
+
+        // Preguntas diagnósticas por problema
+        const preguntasDiagnosticas = {
+            1: [
+                {
+                    numero: 'D1.1',
+                    pregunta: 'En este problema, ¿qué indica que el cambio de entropía resultó positivo?',
+                    opciones: {
+                        a: 'Que el proceso fue irreversible',
+                        b: 'Que la temperatura aumentó',
+                        c: 'Que se perdió energía',
+                        d: 'Que la presión cambió',
+                        e: 'Que el volumen disminuyó',
+                        f: 'Que el sistema se enfrió',
+                        g: 'Que no hay cambio'
+                    },
+                    correcta: 'a',
+                    problema: 1
+                },
+                {
+                    numero: 'D1.2',
+                    pregunta: '¿Qué nos indica que la entropía del sistema aumentó?',
+                    opciones: {
+                        a: 'Que el sistema absorbió calor',
+                        b: 'Que la presión es constante',
+                        c: 'Que el volumen disminuyó',
+                        d: 'Que toda la energía se convirtió en trabajo',
+                        e: 'Que la capacidad calorífica es negativa',
+                        f: 'Que el proceso fue adiabático',
+                        g: 'Que no hubo cambio de estado'
+                    },
+                    correcta: 'a',
+                    problema: 1
+                },
+                {
+                    numero: 'D1.3',
+                    pregunta: '¿Qué significa físicamente que la entropía haya aumentado?',
+                    opciones: {
+                        a: 'El sistema se volvió más desordenado',
+                        b: 'La presión aumentó',
+                        c: 'El volumen disminuyó',
+                        d: 'La temperatura bajó',
+                        e: 'El sistema ganó masa',
+                        f: 'Se creó energía',
+                        g: 'Nada cambió fundamentalmente'
+                    },
+                    correcta: 'a',
+                    problema: 1
+                }
+            ],
+            // ... diagnósticas para otros problemas
+        };
+
+        // Inicialización
+        window.addEventListener('load', function() {
+            const matricula = localStorage.getItem('matriculaActual');
+            if (!matricula) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Cargar respuestas guardadas localmente
+            cargarRespuestasGuardadas();
+
+            document.getElementById('matriculaDisplay').textContent = 'Matrícula: ' + matricula;
+            cargarDatosEstudiante(matricula);
+
+            // Construir lista de preguntas (teoría + diagnósticas de problemas fallidos)
+            construirListaPreguntas(matricula);
+
+            // Mostrar primera pregunta
+            mostrarPregunta(1);
+
+            // Iniciar timer
+            iniciarTimer();
+
+            // Guardado automático
+            setInterval(guardarAutomaticamente, 30000);
+        });
+
+        async function cargarDatosEstudiante(matricula) {
+            try {
+                const { data } = await supabaseClient
+                    .from('estudiantes')
+                    .select('tiempo_extendido')
+                    .eq('matricula', matricula)
+                    .single();
+
+                if (data) {
+                    tiempoExtendido = data.tiempo_extendido || 7;
+                }
+            } catch (err) {
+                console.log('Error:', err);
+            }
+        }
+
+        async function construirListaPreguntas(matricula) {
+            // Obtener respuestas de problemas
+            const { data: respuestas } = await supabaseClient
+                .from('respuestas')
+                .select('*')
+                .eq('matricula', matricula);
+
+            // Determinar cuáles problemas fallaron
+            const problemasFallidos = [];
+            respuestas?.forEach(r => {
+                // Lógica para validar si falló (simplificada)
+                const falló = true; // Aquí iría la validación real
+                if (falló) {
+                    problemasFallidos.push(r.problema_id);
+                }
+            });
+
+            // Combinar: 10 preguntas de teoría + 3 diagnósticas por problema fallido
+            totalPreguntas = 10 + (problemasFallidos.length * 3);
+
+            // Actualizar UI
+            actualizarNumerosPreguntas();
+        }
+
+        function actualizarNumerosPreguntas() {
+            const container = document.getElementById('numerosPreguntas');
+            let html = '';
+
+            for (let i = 1; i <= totalPreguntas; i++) {
+                html += `
+                    <button class="num-btn ${i === preguntaActual ? 'active' : ''}"
+                            onclick="mostrarPregunta(${i})">
+                        ${i}
+                    </button>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
+
+        function mostrarPregunta(numero) {
+            preguntaActual = numero;
+
+            // Actualizar botones de navegación
+            document.getElementById('btnAnterior').disabled = numero === 1;
+            document.getElementById('btnSiguiente').style.display = numero === totalPreguntas ? 'none' : 'block';
+            document.getElementById('btnTerminar').style.display = numero === totalPreguntas ? 'block' : 'none';
+
+            // Actualizar números
+            actualizarNumerosPreguntas();
+
+            // Actualizar progreso
+            document.getElementById('progresText').textContent = `Pregunta ${numero} de ${totalPreguntas}`;
+            const porcentaje = (numero / totalPreguntas) * 100;
+            document.getElementById('progressBar').style.width = porcentaje + '%';
+
+            // Renderizar pregunta
+            const pregunta = numero <= 10 ? preguntasTeoria[numero - 1] : null;
+
+            if (pregunta) {
+                const html = `
+                    <div class="pregunta-box">
+                        <h3>${pregunta.pregunta}</h3>
+                        <div class="opciones">
+                            ${Object.entries(pregunta.opciones).map(([key, valor]) => `
+                                <label class="opcion">
+                                    <input
+                                        type="radio"
+                                        name="pregunta${numero}"
+                                        value="${key}"
+                                        ${respuestasTeoria[numero] === key ? 'checked' : ''}
+                                        onchange="guardarRespuestaTeoria(${numero}, '${key}')"
+                                    >
+                                    <span class="letra">${key.toUpperCase()}</span>
+                                    <span class="texto">${valor}</span>
+                                </label>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('preguntaContent').innerHTML = html;
+            }
+        }
+
+        function siguientePregunta() {
+            if (preguntaActual < totalPreguntas) {
+                mostrarPregunta(preguntaActual + 1);
+            }
+        }
+
+        function preguntaAnterior() {
+            if (preguntaActual > 1) {
+                mostrarPregunta(preguntaActual - 1);
+            }
+        }
+
+        function guardarRespuestaTeoria(numero, respuesta) {
+            respuestasTeoria[numero] = respuesta;
+            // Guardar en localStorage para persistencia
+            localStorage.setItem('respuestasTeoriaLocal', JSON.stringify(respuestasTeoria));
+        }
+
+        function iniciarTimer() {
+            tiempoInicio = Date.now();
+            const tiempoMs = tiempoExtendido * 3600000;
+
+            const interval = setInterval(() => {
+                const tiempoTranscurrido = Date.now() - tiempoInicio;
+                const tiempoRestante = tiempoMs - tiempoTranscurrido;
+
+                if (tiempoRestante <= 0) {
+                    clearInterval(interval);
+                    terminarExamen();
+                    return;
+                }
+
+                mostrarTiempo(tiempoRestante);
+            }, 1000);
+        }
+
+        function mostrarTiempo(ms) {
+            const segundos = Math.floor(ms / 1000);
+            const horas = Math.floor(segundos / 3600);
+            const minutos = Math.floor((segundos % 3600) / 60);
+            const secs = segundos % 60;
+
+            const display = `${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            document.getElementById('timerDisplay').textContent = display;
+
+            if (segundos < 1800) {
+                document.getElementById('timerDisplay').style.color = '#e74c3c';
+            }
+        }
+
+        async function guardarAutomaticamente() {
+            const matricula = localStorage.getItem('matriculaActual');
+
+            for (const [numero, respuesta] of Object.entries(respuestasTeoria)) {
+                await supabaseClient
+                    .from('respuestas_teoria')
+                    .insert([{
+                        matricula: matricula,
+                        tipo: numero <= 10 ? 'teoria' : 'diagnostica',
+                        pregunta_numero: numero,
+                        respuesta_seleccionada: respuesta
+                    }]);
+            }
+
+            document.getElementById('ultimaGuarda').textContent = 'Última guardada: ' + new Date().toLocaleTimeString();
+        }
+
+        async function terminarExamen() {
+            // Verificar que todas las preguntas tengan respuesta
+            const sinRespuesta = [];
+            for (let i = 1; i <= totalPreguntas; i++) {
+                if (!respuestasTeoria[i] || respuestasTeoria[i].trim() === '') {
+                    sinRespuesta.push(i);
+                }
+            }
+
+            if (sinRespuesta.length > 0) {
+                alert(`⚠️ Debes responder TODAS las preguntas\n\nFaltan respuestas en: Pregunta(s) ${sinRespuesta.join(', ')}`);
+                return;
+            }
+
+            const matricula = localStorage.getItem('matriculaActual');
+
+            // Guardar respuestas finales
+            await guardarAutomaticamente();
+
+            // Calificar automáticamente
+            await calificarExamen(matricula);
+
+            // Redirigir a página de confirmación
+            localStorage.removeItem('fase');
+            alert('✓ Examen enviado correctamente\n\nLas calificaciones se mostrarán cuando se liberen.');
+            window.location.href = 'index.html';
+        }
+
+        async function calificarExamen(matricula) {
+            // Aquí iría la lógica completa de calificación
+            // Por ahora es un placeholder
+            console.log('Calificando examen de', matricula);
+        }
+    </script>
+</body>
+</html>
