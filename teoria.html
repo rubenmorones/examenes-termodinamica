@@ -120,6 +120,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/utils.js"></script>
+    <script src="js/matriculas-estudiantes.js"></script>
     <script src="js/problema1-real.js"></script>
     <script src="js/problemas.js"></script>
     <script src="js/BANCO_PREGUNTAS_TEORIA_28.js"></script>
@@ -155,10 +156,7 @@
                 return;
             }
 
-            // Si es 111111, usar la misma matrícula asignada en examen.html
-            if (matricula === '111111') {
-                matricula = localStorage.getItem('matriculaProblemas111111') || '2001001';
-            }
+            // Si es 1111111 (DEMO profesor), el generador maneja el mapeo
 
             try {
                 // Cargar examen real

@@ -19,8 +19,8 @@
                 <input
                     type="text"
                     id="matricula"
-                    placeholder="Ej: 2001001"
-                    maxlength="10"
+                    placeholder="Ej: 2104872"
+                    maxlength="7"
                 >
                 <small>Ingresa tu matrícula de 7 dígitos</small>
             </div>
@@ -55,6 +55,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/utils.js"></script>
+    <script src="js/matriculas-estudiantes.js"></script>
     <script src="js/app.js"></script>
 
     <script>
@@ -89,54 +90,49 @@
             const matricula = document.getElementById('matricula').value.trim();
             limpiarError();
 
-            // Validar
+            // Validar formato (7 dígitos)
             if (!matricula) {
                 mostrarError('Por favor ingresa tu matrícula');
                 return;
             }
-
-            // Permitir matrícula de 6 dígitos (111111) o 7 dígitos (2001001)
-            if (!/^\d{6,7}$/.test(matricula)) {
-                mostrarError('La matrícula debe tener 6 o 7 dígitos (ej: 111111 o 2001001)');
+            if (!/^\d{7}$/.test(matricula)) {
+                mostrarError('La matrícula debe tener 7 dígitos');
                 return;
             }
 
-            // Usar la matrícula tal como se ingresa
-            let matriculaFormato = matricula;
+            // Validar que la matrícula esté registrada (estudiante real o demo 1111111)
+            if (!window.esMatriculaValida(matricula)) {
+                mostrarError('Matrícula no registrada. Verifica con tu profesor.');
+                return;
+            }
 
-            // MODO DEMO: Si es 111111, permitir acceso directo sin Supabase
-            if (matriculaFormato === '111111') {
-                console.log('✅ Acceso directo para matrícula 111111 (DEMO)');
-                localStorage.setItem('matriculaActual', matriculaFormato);
-                localStorage.setItem('modoDemo', 'false');
+            // MODO DEMO: matrícula 1111111 (acceso directo del profesor)
+            if (matricula === '1111111') {
+                console.log('✅ Acceso DEMO (profesor)');
+                localStorage.setItem('matriculaActual', matricula);
                 window.location.href = 'examen.html';
                 return;
             }
 
             try {
-                // Verificar que el estudiante existe (para otros estudiantes)
+                // Verificar/crear estudiante en Supabase
                 const { data, error } = await supabaseClient
                     .from('estudiantes')
                     .select('*')
-                    .eq('matricula', matriculaFormato)
+                    .eq('matricula', matricula)
                     .single();
 
                 if (error || !data) {
-                    // Crear estudiante si no existe
-                    const { data: newStudent, error: createError } = await supabaseClient
+                    const { error: createError } = await supabaseClient
                         .from('estudiantes')
-                        .insert([{ matricula: matriculaFormato }])
-                        .select();
-
+                        .insert([{ matricula: matricula }]);
                     if (createError) {
-                        mostrarError('Error al registrar estudiante: ' + createError.message);
+                        mostrarError('Error al registrar: ' + createError.message);
                         return;
                     }
                 }
 
-                // Guardar en localStorage y redirigir
-                localStorage.setItem('matriculaActual', matriculaFormato);
-                localStorage.setItem('modoDemo', 'false');
+                localStorage.setItem('matriculaActual', matricula);
                 window.location.href = 'examen.html';
 
             } catch (err) {

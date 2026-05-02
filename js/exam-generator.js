@@ -2,7 +2,11 @@
 
 function generarExamenEstudiante(matricula) {
   try {
-    const index = parseInt(matricula) - 2001001;
+    // Obtener índice usando el mapeo de matrículas reales
+    const index = window.obtenerIndiceEstudiante
+      ? window.obtenerIndiceEstudiante(matricula)
+      : (parseInt(matricula) - 2001001);
+
     if (index < 0 || index >= 28) throw new Error('Matrícula ' + matricula + ' inválida');
 
     // P1: Problema real (recipiente rígido aislado)
@@ -17,11 +21,13 @@ function generarExamenEstudiante(matricula) {
     if (!p3) throw new Error('Problema 3 no cargado');
     if (!p4) throw new Error('Problema 4 no cargado');
 
-    // P5: Compresión isotérmica de agua (object con clave matrícula en problemas.js)
+    // P5: Compresión isotérmica de agua (object indexado por matrícula simulada 2001001-2001028)
+    // Mapeamos por índice ya que el archivo problemas.js usa esas claves
+    const matriculaSimulada = String(2001001 + index);
     const p5raw = window.problem5Versions
-      ? (window.problem5Versions[matricula] || window.problem5Versions[parseInt(matricula)])
+      ? (window.problem5Versions[matriculaSimulada] || window.problem5Versions[parseInt(matriculaSimulada)])
       : null;
-    if (!p5raw) throw new Error('Problema 5 no cargado para matrícula ' + matricula);
+    if (!p5raw) throw new Error('Problema 5 no cargado para índice ' + index);
 
     // Preguntas de teoría
     if (!window.preguntasTeoria) throw new Error('Preguntas de teoría no cargadas');

@@ -209,6 +209,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/utils.js"></script>
+    <script src="js/matriculas-estudiantes.js"></script>
     <!-- Problema 1 real (recipiente rígido aislado) -->
     <script src="js/problema1-real.js"></script>
     <!-- Resto de problemas y preguntas (ya tiene problem2-5Versions) -->
@@ -249,17 +250,10 @@
                 return;
             }
 
-            // Si es 111111, seleccionar una matrícula de otros estudiantes (primera vez)
-            if (matricula === '111111') {
-                let matAsignada = localStorage.getItem('matriculaProblemas111111');
-
-                if (!matAsignada) {
-                    // Primera vez: seleccionar aleatoriamente
-                    matAsignada = '2001001'; // Usar siempre la primera para demostración
-                    localStorage.setItem('matriculaProblemas111111', matAsignada);
-                    console.log('🎯 DEMO: Se asignaron problemas de ' + matAsignada);
-                }
-                matricula = matAsignada;
+            // Si es 1111111 (DEMO profesor), usar la primera matrícula real para mostrar el examen
+            if (matricula === '1111111') {
+                console.log('🎯 DEMO: Acceso del profesor');
+                // El generador ya maneja la matrícula 1111111 → índice 0
             }
 
             // Cargar examen real del estudiante
