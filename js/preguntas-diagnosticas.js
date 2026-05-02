@@ -126,14 +126,14 @@ const preguntasDiagnosticas = {
   // PROBLEMA 4: Throttling Isoentálpico (válvula) - 20 pts
   4: [
     {
-      pregunta: "En el análisis de un proceso de estrangulamiento, las suposiciones físicas que conducen a su característica principal son:",
+      pregunta: "En el estrangulamiento de un líquido a través de una válvula reductora, ¿qué propiedad termodinámica permanece constante?",
       opciones: {
-        a: "Adiabático (Q=0), sin trabajo útil (W=0), flujo estable → ΔH = 0",
-        b: "Reversible y adiabático → ΔS = 0",
-        c: "Pared aislante térmica → ΔT = 0",
-        d: "Volumen constante → ΔV = 0",
-        e: "Presión constante → ΔP = 0",
-        f: "Pared impermeable → ΔU = 0"
+        a: "La entalpía (H), por lo tanto ΔH = 0",
+        b: "La entropía (S)",
+        c: "El volumen (V)",
+        d: "La energía interna (U)",
+        e: "La temperatura (T)",
+        f: "La presión (P)"
       },
       correcta: "a"
     },
@@ -150,14 +150,14 @@ const preguntasDiagnosticas = {
       correcta: "a"
     },
     {
-      pregunta: "El coeficiente de Joule-Thomson μ_JT, que predice si un fluido se enfría o calienta al pasar por una válvula de estrangulamiento isoentálpica, se define como:",
+      pregunta: "En un estrangulamiento isoentálpico de un líquido, el cambio de temperatura ΔT se relaciona con las propiedades del fluido (V, β, T, Cp) y el cambio de presión ΔP mediante:",
       opciones: {
-        a: "μ_JT = (∂T/∂P)_H",
-        b: "μ_JT = (∂T/∂P)_S",
-        c: "μ_JT = (∂T/∂V)_P",
-        d: "μ_JT = (∂P/∂T)_V",
-        e: "μ_JT = ΔT/ΔP (constante para todo fluido)",
-        f: "μ_JT = T/P"
+        a: "ΔT = -V·(1-βT)·ΔP / Cp",
+        b: "ΔT = V·ΔP / Cp",
+        c: "ΔT = β·T·ΔP",
+        d: "ΔT = ΔP·Cp / V",
+        e: "ΔT = Cp·V·β·ΔP",
+        f: "ΔT = 0 (proceso isotérmico)"
       },
       correcta: "a"
     }
