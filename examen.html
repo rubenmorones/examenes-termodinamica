@@ -609,13 +609,12 @@
             if (!archivoSeleccionado) return;
 
             const matricula = localStorage.getItem('matriculaActual');
-            // Nombre único: matrícula + problema + timestamp + random
             const ext = archivoSeleccionado.name.split('.').pop();
             const nombreArchivo = matricula + '-P' + problemaActualSubida + '-' +
                                    Date.now() + '-' + Math.floor(Math.random() * 1000) + '.' + ext;
 
             try {
-                // Subir archivo a Storage con opción de reemplazo
+                // 1) Subir archivo a Storage
                 const { data, error } = await supabaseClient.storage
                     .from('probatorios')
                     .upload(nombreArchivo, archivoSeleccionado, {
@@ -623,48 +622,51 @@
                         upsert: false
                     });
 
-                if (error) throw error;
+                if (error) throw new Error('Storage: ' + error.message);
 
-                // Usar UPSERT para permitir reemplazar el probatorio del mismo problema
+                // 2) Borrar registros previos del mismo problema (si existen)
+                await supabaseClient
+                    .from('probatorios')
+                    .delete()
+                    .eq('matricula', matricula)
+                    .eq('problema_id', problemaActualSubida);
+
+                // 3) Insertar el nuevo registro
                 const { error: errorBD } = await supabaseClient
                     .from('probatorios')
-                    .upsert([{
+                    .insert([{
                         matricula: matricula,
                         problema_id: problemaActualSubida,
                         archivo_url: data.path
-                    }], {
-                        onConflict: 'matricula,problema_id'
-                    });
+                    }]);
 
-                if (errorBD) {
-                    // Si upsert falla por falta de constraint, hacer insert normal
-                    console.log('Upsert falló, intentando insert:', errorBD.message);
-                    await supabaseClient
-                        .from('probatorios')
-                        .insert([{
-                            matricula: matricula,
-                            problema_id: problemaActualSubida,
-                            archivo_url: data.path
-                        }]);
-                }
+                if (errorBD) throw new Error('Base de datos: ' + errorBD.message);
 
-                alert('✓ Probatorio subido correctamente');
+                alert('✓ Probatorio subido correctamente para Problema ' + problemaActualSubida);
                 cerrarModalProbatorio();
                 actualizarContadorProbatorios();
 
             } catch (err) {
-                alert('Error al subir: ' + err.message);
+                console.error('Error al subir probatorio:', err);
+                alert('❌ Error al subir: ' + err.message);
             }
         }
 
         async function actualizarContadorProbatorios() {
             const matricula = localStorage.getItem('matriculaActual');
-            const { data } = await supabaseClient
+            const { data, error } = await supabaseClient
                 .from('probatorios')
-                .select('id')
+                .select('problema_id')
                 .eq('matricula', matricula);
 
-            document.getElementById('probatoriosCount').textContent = `${data?.length || 0}/5`;
+            if (error) {
+                console.error('Error contando probatorios:', error);
+                return;
+            }
+
+            // Contar problemas únicos (no filas)
+            const problemasConProbatorio = new Set((data || []).map(p => p.problema_id));
+            document.getElementById('probatoriosCount').textContent = problemasConProbatorio.size + '/5';
         }
 
         async function guardarAutomaticamente() {
@@ -702,14 +704,26 @@
                 return;
             }
 
-            // Verificar que todos los probatorios estén subidos
-            const { data: probatorios } = await supabaseClient
+            // Verificar que todos los probatorios estén subidos (uno por problema)
+            const { data: probatorios, error: errorProb } = await supabaseClient
                 .from('probatorios')
-                .select('id')
+                .select('problema_id')
                 .eq('matricula', matricula);
 
-            if (!probatorios || probatorios.length < 5) {
-                alert('⚠️ Debes subir los 5 probatorios antes de continuar');
+            if (errorProb) {
+                alert('Error al verificar probatorios: ' + errorProb.message);
+                return;
+            }
+
+            // Contar problemas únicos con probatorio
+            const problemasConProbatorio = new Set((probatorios || []).map(p => p.problema_id));
+            const faltantes = [];
+            for (let i = 1; i <= 5; i++) {
+                if (!problemasConProbatorio.has(i)) faltantes.push(i);
+            }
+
+            if (faltantes.length > 0) {
+                alert('⚠️ Faltan probatorios para los Problemas: ' + faltantes.join(', '));
                 return;
             }
 
