@@ -1,8 +1,9 @@
-// PREGUNTAS DIAGNÓSTICAS POR PROBLEMA
+// PREGUNTAS DIAGNÓSTICAS POR PROBLEMA (6 opciones a-f)
 // Si el estudiante falla un problema (respuesta fuera de ±7%), se le aplican estas 3 preguntas
+// Recuperación: 1/3 = 15%, 2/3 = 30%, 3/3 = 50% del valor del problema
 
 const preguntasDiagnosticas = {
-  // PROBLEMA 1: Recipiente rígido aislado (Segunda Ley)
+  // PROBLEMA 1: Recipiente rígido aislado (Segunda Ley) - 20 pts
   1: [
     {
       pregunta: "Para evaluar si un proceso es termodinámicamente posible según la Segunda Ley, debemos verificar:",
@@ -12,8 +13,7 @@ const preguntasDiagnosticas = {
         c: "Q = W siempre",
         d: "ΔS_sistema > 0 únicamente",
         e: "T_inicial = T_final",
-        f: "P_inicial = P_final",
-        g: "El sistema esté aislado"
+        f: "P_inicial = P_final"
       },
       correcta: "b"
     },
@@ -25,8 +25,7 @@ const preguntasDiagnosticas = {
         c: "ΔS = W/T",
         d: "ΔS = ΔU/T",
         e: "ΔS = nR·ln(P₂/P₁)",
-        f: "ΔS = 0 siempre",
-        g: "ΔS = nCp·ln(T₂/T₁)"
+        f: "ΔS = nCp·ln(T₂/T₁)"
       },
       correcta: "b"
     },
@@ -38,14 +37,13 @@ const preguntasDiagnosticas = {
         c: "ΔS_dep = -Q/T_dep (negativo siempre)",
         d: "ΔS_dep = T_dep/Q",
         e: "ΔS_dep = Q·T_dep",
-        f: "ΔS_dep = ln(Q/T_dep)",
-        g: "Depende del tipo de gas"
+        f: "ΔS_dep = ln(Q/T_dep)"
       },
       correcta: "b"
     }
   ],
 
-  // PROBLEMA 2: Máquina Térmica (eficiencia de Carnot)
+  // PROBLEMA 2: Máquina Térmica (eficiencia de Carnot) - 20 pts
   2: [
     {
       pregunta: "La eficiencia de Carnot entre dos depósitos a T_h (caliente) y T_c (frío) es:",
@@ -55,8 +53,7 @@ const preguntasDiagnosticas = {
         c: "η = (T_h - T_c)/T_c",
         d: "η = T_h/T_c",
         e: "η = 1 + T_c/T_h",
-        f: "η = (T_h + T_c)/T_h",
-        g: "η = T_c - T_h"
+        f: "η = (T_h + T_c)/T_h"
       },
       correcta: "b"
     },
@@ -68,8 +65,7 @@ const preguntasDiagnosticas = {
         c: "Q_c = η·W",
         d: "Q_c = 0",
         e: "Q_c = W·η",
-        f: "Q_c = W + η",
-        g: "Depende de la presión"
+        f: "Q_c = W + η"
       },
       correcta: "b"
     },
@@ -81,14 +77,13 @@ const preguntasDiagnosticas = {
         c: "ΔT = ṁ / Q_c",
         d: "ΔT = cp / Q_c",
         e: "ΔT = Q_c / cp solamente",
-        f: "ΔT = Q_c · cp",
-        g: "No se puede calcular"
+        f: "ΔT = Q_c · cp"
       },
       correcta: "b"
     }
   ],
 
-  // PROBLEMA 3: Compresión Isotérmica Irreversible (entropía)
+  // PROBLEMA 3: Compresión Isotérmica Irreversible (entropía) - 20 pts
   3: [
     {
       pregunta: "Para un proceso isotérmico irreversible, ¿cuál afirmación es correcta?",
@@ -98,8 +93,7 @@ const preguntasDiagnosticas = {
         c: "Q_irreversible = Q_reversible exactamente",
         d: "El trabajo irreversible es menor que el reversible",
         e: "ΔU ≠ 0 para gas ideal isotérmico",
-        f: "ΔS_universo = 0 siempre",
-        g: "El proceso es adiabático"
+        f: "ΔS_universo = 0 siempre"
       },
       correcta: "b"
     },
@@ -111,8 +105,7 @@ const preguntasDiagnosticas = {
         c: "ΔS = 0",
         d: "ΔS = nCp·ln(P₂/P₁)",
         e: "ΔS = Q·ln(P₂/P₁)",
-        f: "ΔS = T/P",
-        g: "ΔS = -nCv·ln(P₂/P₁)"
+        f: "ΔS = -nCv·ln(P₂/P₁)"
       },
       correcta: "a"
     },
@@ -124,14 +117,13 @@ const preguntasDiagnosticas = {
         c: "ΔS_universo = 0",
         d: "El sistema gana entropía",
         e: "T_alrededores baja",
-        f: "El proceso se vuelve adiabático",
-        g: "ΔS_alrededores < 0"
+        f: "ΔS_alrededores < 0"
       },
       correcta: "a"
     }
   ],
 
-  // PROBLEMA 4: Throttling Isoentálpico (válvula)
+  // PROBLEMA 4: Throttling Isoentálpico (válvula) - 20 pts
   4: [
     {
       pregunta: "Un proceso de throttling (válvula reductora) se caracteriza por:",
@@ -141,8 +133,7 @@ const preguntasDiagnosticas = {
         c: "ΔT = 0 (isotérmico)",
         d: "ΔV = 0 (isocórico)",
         e: "ΔP = 0 (isobárico)",
-        f: "Q = W",
-        g: "ΔU = 0 siempre"
+        f: "Q = W"
       },
       correcta: "a"
     },
@@ -154,8 +145,7 @@ const preguntasDiagnosticas = {
         c: "β = (∂T/∂V)_P",
         d: "β = V/T",
         e: "β = (∂P/∂T)_V",
-        f: "β = ΔV·ΔT",
-        g: "β = ρ·V"
+        f: "β = ΔV·ΔT"
       },
       correcta: "a"
     },
@@ -167,14 +157,13 @@ const preguntasDiagnosticas = {
         c: "ΔT = ΔP/Cp",
         d: "ΔT = 0 (siempre isotérmico)",
         e: "ΔT = β·ΔP",
-        f: "ΔT = Cp/V",
-        g: "ΔT = T·ΔP"
+        f: "ΔT = Cp/V"
       },
       correcta: "a"
     }
   ],
 
-  // PROBLEMA 5: Compresión Isotérmica Reversible de Agua
+  // PROBLEMA 5: Compresión Isotérmica Reversible de Agua - 10 pts
   5: [
     {
       pregunta: "Para un líquido incompresible bajo compresión isotérmica reversible, el volumen final se calcula como:",
@@ -184,8 +173,7 @@ const preguntasDiagnosticas = {
         c: "V₂ = V₁",
         d: "V₂ = V₁·(T₂/T₁)",
         e: "V₂ = V₁·(P₂-P₁)",
-        f: "V₂ = V₁/κ",
-        g: "V₂ = V₁·β·ΔT"
+        f: "V₂ = V₁/κ"
       },
       correcta: "a"
     },
@@ -197,8 +185,7 @@ const preguntasDiagnosticas = {
         c: "ΔH = nCp·ΔT",
         d: "ΔH = -V·ΔP",
         e: "ΔH = β·V·ΔP",
-        f: "ΔH = κ·ΔP",
-        g: "ΔH = ΔU + W"
+        f: "ΔH = κ·ΔP"
       },
       correcta: "a"
     },
@@ -210,8 +197,7 @@ const preguntasDiagnosticas = {
         c: "Q = 0 (proceso adiabático)",
         d: "Q = ΔH",
         e: "Q = -ΔU",
-        f: "Q = W·T",
-        g: "Q = κ·V·ΔP"
+        f: "Q = W·T"
       },
       correcta: "a"
     }
