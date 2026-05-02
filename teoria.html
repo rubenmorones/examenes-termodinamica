@@ -420,15 +420,16 @@
                 const respuestasProblemas = JSON.parse(localStorage.getItem('respuestasExamen') || '{}');
                 const calificacion = window.calcularCalificacion(matricula, respuestasProblemas, respuestasTeoria);
 
-                console.log('📊 Calificación final:', calificacion.puntos + '/' + calificacion.sobre);
-                console.log('Detalle:', calificacion.detalle);
+                // NO mostrar calificación al alumno (solo al admin)
+                console.log('📊 Calificación guardada (solo admin la verá hasta liberar)');
 
-                // Guardar calificación en Supabase
+                // Guardar calificación en Supabase con liberada=false
                 try {
                     await supabaseClient
                         .from('estudiantes')
                         .update({
                             calificacion_final: calificacion.puntos,
+                            calificacion_liberada: false,  // 🔒 Bloqueada hasta que admin libere
                             fecha_envio: new Date().toISOString()
                         })
                         .eq('matricula', matricula);

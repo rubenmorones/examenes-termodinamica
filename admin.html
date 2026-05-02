@@ -3,374 +3,494 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Administrativo - Termodinámica</title>
+    <title>Panel Admin - Termodinámica</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        .admin-tabs { display: flex; gap: 0.5rem; margin: 1rem 0; flex-wrap: wrap; }
+        .admin-tabs button { padding: 0.5rem 1rem; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: #f5f5f5; border-radius: 8px; cursor: pointer; }
+        .admin-tabs button.active { background: #5b7fff; }
+        .panel-section { display: none; padding: 1.5rem; background: rgba(255,255,255,0.03); border-radius: 12px; margin-top: 1rem; }
+        .panel-section.active { display: block; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+        th { background: rgba(91,127,255,0.2); padding: 0.75rem; text-align: left; }
+        td { padding: 0.6rem 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.06); }
+        tr:hover { background: rgba(255,255,255,0.03); }
+        .badge { padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.8em; display: inline-block; }
+        .badge-progress { background: rgba(255,193,7,0.2); color: #ffc107; }
+        .badge-done { background: rgba(76,175,80,0.2); color: #4caf50; }
+        .badge-locked { background: rgba(255,107,157,0.2); color: #ff6b9d; }
+        .badge-released { background: rgba(91,127,255,0.2); color: #5b7fff; }
+        .btn-mini { padding: 0.3rem 0.7rem; font-size: 0.85em; border: none; border-radius: 6px; cursor: pointer; margin: 0 2px; }
+        .btn-blue { background: #5b7fff; color: white; }
+        .btn-orange { background: #ff9800; color: white; }
+        .btn-red { background: #e74c3c; color: white; }
+        .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+        .stat-card { padding: 1rem; background: rgba(91,127,255,0.1); border-radius: 12px; text-align: center; }
+        .stat-card .num { font-size: 1.8em; font-weight: bold; color: #5b7fff; }
+        .stat-card .lbl { font-size: 0.85em; color: #aaa; }
+        .form-grid { display: grid; gap: 0.75rem; max-width: 600px; margin-bottom: 2rem; padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 12px; }
+        .form-grid input, .form-grid select { padding: 0.6rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: #f5f5f5; }
+    </style>
 </head>
 <body>
-    <div class="admin-container">
-        <!-- HEADER -->
-        <header class="admin-header">
-            <h1>⚙️ Panel Administrativo</h1>
-            <div class="admin-info">
-                <p id="usuarioInfo">Administrador</p>
-                <button class="btn btn-secondary" onclick="cerrarSesion()">Cerrar sesión</button>
+    <!-- Login -->
+    <div id="loginScreen" class="login-container">
+        <div class="login-box">
+            <div class="logo">
+                <h1>🔒 Panel Admin</h1>
+                <p>Acceso del profesor</p>
+            </div>
+            <div class="form-group">
+                <label>Contraseña</label>
+                <input type="password" id="passwordAdmin" placeholder="Contraseña" autofocus>
+            </div>
+            <button class="btn btn-primary" onclick="loginAdmin()">Ingresar</button>
+            <div id="errorAdmin" style="color:#e74c3c;margin-top:10px;display:none;"></div>
+            <hr>
+            <a href="index.html" class="btn btn-secondary" style="display:block;text-align:center;text-decoration:none;">← Volver</a>
+        </div>
+    </div>
+
+    <!-- Panel principal -->
+    <div id="adminPanel" style="display:none;padding:2rem;max-width:1400px;margin:0 auto;">
+        <header style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+            <div>
+                <h1>⚙️ Panel Administrativo</h1>
+                <p style="color:#aaa;">Examen 2do Parcial - Termodinámica</p>
+            </div>
+            <div>
+                <button class="btn btn-secondary" onclick="cargarTodo()">🔄 Actualizar</button>
+                <button class="btn btn-secondary" onclick="window.location.href='index.html'">Cerrar</button>
             </div>
         </header>
 
-        <!-- NAVEGACIÓN -->
-        <nav class="admin-nav">
-            <button class="nav-btn active" onclick="mostrarSeccion('calificaciones')">
-                📊 Calificaciones
-            </button>
-            <button class="nav-btn" onclick="mostrarSeccion('estudiantes')">
-                👥 Estudiantes
-            </button>
-            <button class="nav-btn" onclick="mostrarSeccion('tiempos')">
-                ⏱️ Extender Tiempo
-            </button>
-            <button class="nav-btn" onclick="mostrarSeccion('exportar')">
-                📥 Descargar
-            </button>
-        </nav>
+        <div class="admin-tabs">
+            <button class="active" onclick="cambiarTab(event,'progreso')">📊 Progreso en Vivo</button>
+            <button onclick="cambiarTab(event,'calificaciones')">🎯 Calificaciones</button>
+            <button onclick="cambiarTab(event,'tiempo')">⏱️ Extender Tiempo</button>
+            <button onclick="cambiarTab(event,'descargar')">📥 Descargar Excel</button>
+        </div>
 
-        <!-- CONTENIDO -->
-        <main class="admin-content">
-            <!-- CALIFICACIONES -->
-            <section id="seccion-calificaciones" class="seccion active">
-                <h2>Calificaciones</h2>
-
-                <div class="filtros">
-                    <input type="text" id="filtroMatricula" placeholder="Buscar por matrícula..."
-                           onkeyup="filtrarTabla()">
-                    <select id="filtroEstado" onchange="filtrarTabla()">
-                        <option value="">Todos</option>
-                        <option value="completado">Completado</option>
-                        <option value="en-progreso">En Progreso</option>
-                    </select>
-                </div>
-
-                <table class="tabla-calificaciones">
+        <!-- TAB: Progreso en Vivo -->
+        <section id="tab-progreso" class="panel-section active">
+            <div class="stats" id="stats"></div>
+            <h3>Estado de cada alumno</h3>
+            <p style="color:#aaa;font-size:0.9em;">Auto-actualiza cada 30 segundos. Click en "🔄 Actualizar" para refrescar manualmente.</p>
+            <div style="overflow-x:auto;">
+                <table>
                     <thead>
                         <tr>
                             <th>Matrícula</th>
-                            <th>P1 (20)</th>
-                            <th>P2 (20)</th>
-                            <th>P3 (20)</th>
-                            <th>P4 (20)</th>
-                            <th>P5 (10)</th>
-                            <th>Teoría (10)</th>
-                            <th>Total (100)</th>
+                            <th>Problemas</th>
+                            <th>Probatorios</th>
+                            <th>Teoría</th>
                             <th>Estado</th>
-                            <th>Acciones</th>
+                            <th>Tiempo</th>
                         </tr>
                     </thead>
-                    <tbody id="tablaCalificaciones">
-                        <!-- Se llena con JavaScript -->
-                    </tbody>
+                    <tbody id="tablaProgreso"></tbody>
                 </table>
-            </section>
+            </div>
+        </section>
 
-            <!-- ESTUDIANTES -->
-            <section id="seccion-estudiantes" class="seccion">
-                <h2>Gestión de Estudiantes</h2>
-
-                <div class="agregar-estudiante">
-                    <h3>Agregar Estudiante</h3>
-                    <div class="form-row">
-                        <input type="text" id="matriculaNew" placeholder="Matrícula (2001001)" maxlength="7">
-                        <input type="text" id="nombreNew" placeholder="Nombre completo">
-                        <button class="btn btn-primary" onclick="agregarEstudiante()">+ Agregar</button>
-                    </div>
-                </div>
-
-                <h3>Estudiantes Registrados</h3>
-                <table class="tabla-estudiantes">
+        <!-- TAB: Calificaciones -->
+        <section id="tab-calificaciones" class="panel-section">
+            <h3>Calificaciones Finales</h3>
+            <p style="color:#aaa;font-size:0.9em;">Las calificaciones NO se muestran al alumno hasta que las liberes.</p>
+            <div style="margin-bottom:1rem;">
+                <button class="btn btn-primary" onclick="liberarTodas()">🔓 Liberar TODAS</button>
+                <button class="btn btn-secondary" onclick="ocultarTodas()">🔒 Ocultar TODAS</button>
+            </div>
+            <div style="overflow-x:auto;">
+                <table>
                     <thead>
                         <tr>
                             <th>Matrícula</th>
-                            <th>Nombre</th>
-                            <th>Registrado</th>
-                            <th>Acciones</th>
+                            <th>P1 (20)</th><th>P2 (20)</th><th>P3 (20)</th><th>P4 (20)</th><th>P5 (10)</th>
+                            <th>Teoría</th>
+                            <th>Recup.</th>
+                            <th>Total</th>
+                            <th>Estado</th>
+                            <th>Acción</th>
                         </tr>
                     </thead>
-                    <tbody id="tablaEstudiantes">
-                        <!-- Se llena con JavaScript -->
-                    </tbody>
+                    <tbody id="tablaCalif"></tbody>
                 </table>
-            </section>
+            </div>
+        </section>
 
-            <!-- EXTENDER TIEMPO -->
-            <section id="seccion-tiempos" class="seccion">
-                <h2>Extender Tiempo de Examen</h2>
+        <!-- TAB: Extender Tiempo -->
+        <section id="tab-tiempo" class="panel-section">
+            <h3>Extender tiempo a un alumno</h3>
+            <div class="form-grid">
+                <input type="text" id="matriculaTiempo" placeholder="Matrícula (ej: 2104872)" maxlength="7">
+                <select id="horasTiempo">
+                    <option value="7">7 horas (por defecto)</option>
+                    <option value="8">8 horas</option>
+                    <option value="9">9 horas</option>
+                    <option value="10">10 horas</option>
+                    <option value="12">12 horas</option>
+                    <option value="24">24 horas</option>
+                </select>
+                <button class="btn btn-primary" onclick="extenderTiempo()">⏱️ Aplicar</button>
+            </div>
 
-                <div class="extender-tiempo-box">
-                    <div class="form-row">
-                        <input type="text" id="matriculaExtender" placeholder="Matrícula (2001001)" maxlength="7">
-                        <select id="horasExtender">
-                            <option value="7">7 horas (por defecto)</option>
-                            <option value="8">8 horas</option>
-                            <option value="9">9 horas</option>
-                            <option value="10">10 horas</option>
-                            <option value="12">12 horas</option>
-                        </select>
-                        <textarea id="razonExtender" placeholder="Razón (opcional, para registro)"></textarea>
-                        <button class="btn btn-warning" onclick="extenderTiempo()">⏱️ Extender Tiempo</button>
-                    </div>
-                </div>
-
-                <h3>Historial de Extensiones</h3>
-                <table class="tabla-extensiones">
-                    <thead>
-                        <tr>
-                            <th>Matrícula</th>
-                            <th>Horas Originales</th>
-                            <th>Horas Extendidas</th>
-                            <th>Razón</th>
-                            <th>Fecha</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tablaExtensiones">
-                        <!-- Se llena con JavaScript -->
-                    </tbody>
+            <h3>Tiempos asignados</h3>
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead><tr><th>Matrícula</th><th>Horas</th></tr></thead>
+                    <tbody id="tablaTiempos"></tbody>
                 </table>
-            </section>
+            </div>
+        </section>
 
-            <!-- DESCARGAR/EXPORTAR -->
-            <section id="seccion-exportar" class="seccion">
-                <h2>Descargar Datos</h2>
-
-                <div class="exportar-opciones">
-                    <button class="btn btn-primary" onclick="descargarCSV()">
-                        📥 Descargar Calificaciones (CSV/Excel)
-                    </button>
-                    <button class="btn btn-primary" onclick="descargarJSON()">
-                        📥 Descargar Datos Completos (JSON)
-                    </button>
-                    <button class="btn btn-secondary" onclick="generarReporte()">
-                        📄 Generar Reporte (PDF)
-                    </button>
-                </div>
-
-                <div class="estadisticas-box">
-                    <h3>Estadísticas Generales</h3>
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <p id="totalEstudiantes">0</p>
-                            <small>Estudiantes registrados</small>
-                        </div>
-                        <div class="stat-card">
-                            <p id="examenesCompletos">0</p>
-                            <small>Exámenes completados</small>
-                        </div>
-                        <div class="stat-card">
-                            <p id="promedio">0.0</p>
-                            <small>Promedio general</small>
-                        </div>
-                        <div class="stat-card">
-                            <p id="calificacionAlta">0</p>
-                            <small>Calificación más alta</small>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </main>
+        <!-- TAB: Descargar -->
+        <section id="tab-descargar" class="panel-section">
+            <h3>Descargar Calificaciones</h3>
+            <p style="color:#aaa;font-size:0.9em;">Genera un archivo CSV/Excel con todas las calificaciones de los 28 alumnos.</p>
+            <div style="display:flex;gap:1rem;flex-wrap:wrap;">
+                <button class="btn btn-primary" onclick="descargarExcel()" style="font-size:1.1em;padding:1rem 2rem;">
+                    📥 Descargar Calificaciones (CSV)
+                </button>
+                <button class="btn btn-secondary" onclick="descargarRespuestasJSON()">
+                    📥 Descargar Respuestas Crudas (JSON)
+                </button>
+            </div>
+            <p style="color:#999;font-size:0.85em;margin-top:1rem;">
+                💡 El archivo CSV se puede abrir directamente en Excel.<br>
+                💡 Las calificaciones se calculan en tiempo real basadas en las respuestas guardadas.
+            </p>
+        </section>
     </div>
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/supabase-config.js"></script>
-    <script src="js/utils.js"></script>
+    <script src="js/supabase-config.js?v=5"></script>
+    <script src="js/utils.js?v=5"></script>
+    <script src="js/matriculas-estudiantes.js?v=5"></script>
+    <script src="js/problema1-real.js?v=5"></script>
+    <script src="js/problemas.js?v=5"></script>
+    <script src="js/BANCO_PREGUNTAS_TEORIA_28.js?v=5"></script>
+    <script src="js/preguntas-diagnosticas.js?v=5"></script>
+    <script src="js/exam-generator.js?v=5"></script>
 
     <script>
-        let adminAutenticado = false;
-        let contraseniaAdmin = 'admin2026'; // Cambiar esto en producción
+        const PASSWORD_ADMIN = 'rayado80';
+        let autoRefreshInterval = null;
 
-        // Verificar autenticación
-        window.addEventListener('load', function() {
-            const autenticado = prompt('Ingresa contraseña de administrador:');
-            if (autenticado === contraseniaAdmin) {
-                adminAutenticado = true;
-                cargarDatos();
+        function loginAdmin() {
+            const pwd = document.getElementById('passwordAdmin').value;
+            if (pwd === PASSWORD_ADMIN) {
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('adminPanel').style.display = 'block';
+                cargarTodo();
+                // Auto-refresh cada 30 segundos
+                autoRefreshInterval = setInterval(cargarTodo, 30000);
             } else {
-                alert('Contraseña incorrecta');
-                window.location.href = 'index.html';
+                document.getElementById('errorAdmin').textContent = '❌ Contraseña incorrecta';
+                document.getElementById('errorAdmin').style.display = 'block';
             }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('passwordAdmin').addEventListener('keypress', e => {
+                if (e.key === 'Enter') loginAdmin();
+            });
         });
 
-        function mostrarSeccion(seccion) {
-            // Ocultar todas las secciones
-            document.querySelectorAll('.seccion').forEach(s => {
-                s.classList.remove('active');
-            });
-
-            // Mostrar sección seleccionada
-            document.getElementById(`seccion-${seccion}`).classList.add('active');
-
-            // Actualizar botones nav
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
+        function cambiarTab(event, tab) {
+            document.querySelectorAll('.admin-tabs button').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.panel-section').forEach(s => s.classList.remove('active'));
             event.target.classList.add('active');
+            document.getElementById('tab-' + tab).classList.add('active');
         }
 
-        async function cargarDatos() {
-            cargarCalificaciones();
-            cargarEstudiantes();
-            cargarExtensiones();
-            cargarEstadisticas();
+        async function cargarTodo() {
+            await cargarProgreso();
+            await cargarCalificaciones();
+            await cargarTiempos();
         }
 
-        async function cargarCalificaciones() {
-            try {
-                const { data } = await supabaseClient
-                    .from('calificaciones_finales')
-                    .select('*')
-                    .order('matricula');
+        // ============================================================
+        // PROGRESO EN VIVO
+        // ============================================================
+        async function cargarProgreso() {
+            const matriculas = window.MATRICULAS_ESTUDIANTES;
+            const tbody = document.getElementById('tablaProgreso');
+            tbody.innerHTML = '<tr><td colspan="6">Cargando...</td></tr>';
 
-                const tbody = document.getElementById('tablaCalificaciones');
-                tbody.innerHTML = data?.map(cal => `
-                    <tr>
-                        <td>${cal.matricula}</td>
-                        <td>${cal.p1_puntos || '-'}</td>
-                        <td>${cal.p2_puntos || '-'}</td>
-                        <td>${cal.p3_puntos || '-'}</td>
-                        <td>${cal.p4_puntos || '-'}</td>
-                        <td>${cal.p5_puntos || '-'}</td>
-                        <td>${cal.teoria_puntos || '-'}</td>
-                        <td><strong>${cal.total_puntos || '-'}</strong></td>
-                        <td>${cal.liberada ? '✓ Liberada' : '🔒 Privada'}</td>
-                        <td>
-                            <button class="btn-pequeño" onclick="liberarCalificacion('${cal.matricula}')">
-                                ${cal.liberada ? 'Ocultar' : 'Liberar'}
-                            </button>
-                        </td>
-                    </tr>
-                `).join('');
-            } catch (err) {
-                console.error('Error:', err);
-            }
-        }
+            // Cargar datos de Supabase
+            const [respuestasRes, probatoriosRes, teoriaRes, estudiantesRes] = await Promise.all([
+                supabaseClient.from('respuestas').select('*'),
+                supabaseClient.from('probatorios').select('*'),
+                supabaseClient.from('respuestas_teoria').select('*'),
+                supabaseClient.from('estudiantes').select('*')
+            ]);
 
-        async function cargarEstudiantes() {
-            try {
-                const { data } = await supabaseClient
-                    .from('estudiantes')
-                    .select('*')
-                    .order('matricula');
+            const respuestas = respuestasRes.data || [];
+            const probatorios = probatoriosRes.data || [];
+            const teoria = teoriaRes.data || [];
+            const estudiantes = estudiantesRes.data || [];
 
-                const tbody = document.getElementById('tablaEstudiantes');
-                tbody.innerHTML = data?.map(est => `
-                    <tr>
-                        <td>${est.matricula}</td>
-                        <td>${est.nombre || '(sin nombre)'}</td>
-                        <td>${new Date(est.created_at).toLocaleDateString()}</td>
-                        <td>
-                            <button class="btn-pequeño" onclick="verDetalles('${est.matricula}')">Ver</button>
-                            <button class="btn-pequeño" onclick="eliminarEstudiante('${est.matricula}')">Eliminar</button>
-                        </td>
-                    </tr>
-                `).join('');
-            } catch (err) {
-                console.error('Error:', err);
-            }
-        }
+            let totalRegistrados = 0, totalCompletos = 0, totalEnProgreso = 0;
 
-        async function cargarExtensiones() {
-            // Placeholder - integrar con tabla real
-        }
+            tbody.innerHTML = matriculas.map(mat => {
+                const est = estudiantes.find(e => e.matricula === mat);
+                const respCount = respuestas.filter(r => r.matricula === mat).length;
+                const probSet = new Set(probatorios.filter(p => p.matricula === mat).map(p => p.problema_id));
+                const probCount = probSet.size;
+                const teoCount = teoria.filter(t => t.matricula === mat).length;
 
-        async function cargarEstadisticas() {
-            try {
-                const { data: estudiantes } = await supabaseClient
-                    .from('estudiantes')
-                    .select('id');
-
-                const { data: completados } = await supabaseClient
-                    .from('calificaciones_finales')
-                    .select('total_puntos');
-
-                document.getElementById('totalEstudiantes').textContent = estudiantes?.length || 0;
-                document.getElementById('examenesCompletos').textContent = completados?.length || 0;
-
-                if (completados && completados.length > 0) {
-                    const total = completados.reduce((sum, c) => sum + (c.total_puntos || 0), 0);
-                    const promedio = (total / completados.length).toFixed(1);
-                    const maximo = Math.max(...completados.map(c => c.total_puntos || 0));
-
-                    document.getElementById('promedio').textContent = promedio;
-                    document.getElementById('calificacionAlta').textContent = maximo;
+                let estado = 'No iniciado';
+                let badge = 'badge-progress';
+                if (est) {
+                    totalRegistrados++;
+                    if (est.calificacion_final != null) {
+                        estado = 'Completado';
+                        badge = 'badge-done';
+                        totalCompletos++;
+                    } else if (respCount > 0 || probCount > 0 || teoCount > 0) {
+                        estado = 'En progreso';
+                        badge = 'badge-progress';
+                        totalEnProgreso++;
+                    } else {
+                        estado = 'Registrado';
+                    }
                 }
-            } catch (err) {
-                console.error('Error:', err);
-            }
+
+                const horas = est?.tiempo_extendido || 7;
+
+                return `<tr>
+                    <td>${mat}</td>
+                    <td>${respCount}/5</td>
+                    <td>${probCount}/5</td>
+                    <td>${teoCount}</td>
+                    <td><span class="badge ${badge}">${estado}</span></td>
+                    <td>${horas}h</td>
+                </tr>`;
+            }).join('');
+
+            // Stats
+            document.getElementById('stats').innerHTML = `
+                <div class="stat-card"><div class="num">${matriculas.length}</div><div class="lbl">Total alumnos</div></div>
+                <div class="stat-card"><div class="num">${totalRegistrados}</div><div class="lbl">Han ingresado</div></div>
+                <div class="stat-card"><div class="num">${totalEnProgreso}</div><div class="lbl">En progreso</div></div>
+                <div class="stat-card"><div class="num">${totalCompletos}</div><div class="lbl">Completados</div></div>
+            `;
         }
 
-        async function liberarCalificacion(matricula) {
-            const estado = await supabaseClient
-                .from('calificaciones_finales')
-                .select('liberada')
-                .eq('matricula', matricula)
-                .single();
+        // ============================================================
+        // CALIFICACIONES
+        // ============================================================
+        async function cargarCalificaciones() {
+            const matriculas = window.MATRICULAS_ESTUDIANTES;
+            const tbody = document.getElementById('tablaCalif');
 
+            // Cargar todas las respuestas
+            const [respuestasRes, teoriaRes, estudiantesRes] = await Promise.all([
+                supabaseClient.from('respuestas').select('*'),
+                supabaseClient.from('respuestas_teoria').select('*'),
+                supabaseClient.from('estudiantes').select('*')
+            ]);
+
+            const respuestas = respuestasRes.data || [];
+            const teoria = teoriaRes.data || [];
+            const estudiantes = estudiantesRes.data || [];
+
+            tbody.innerHTML = matriculas.map(mat => {
+                const est = estudiantes.find(e => e.matricula === mat);
+
+                // Reconstruir respuestas
+                const respProb = {};
+                respuestas.filter(r => r.matricula === mat).forEach(r => {
+                    respProb[r.problema_id] = String(r.respuesta_numerica);
+                });
+                const respTeo = {};
+                teoria.filter(t => t.matricula === mat).forEach(t => {
+                    respTeo[t.pregunta_numero] = t.respuesta_seleccionada;
+                });
+
+                if (Object.keys(respProb).length === 0) {
+                    return `<tr><td>${mat}</td>${'<td>-</td>'.repeat(9)}<td>-</td></tr>`;
+                }
+
+                // Calcular calificación
+                let calif;
+                try {
+                    calif = window.calcularCalificacion(mat, respProb, respTeo);
+                } catch (err) {
+                    return `<tr><td>${mat}</td><td colspan="10">Error: ${err.message}</td></tr>`;
+                }
+
+                const liberada = est?.calificacion_liberada || false;
+                const d = calif.detalle.problemas;
+                const totalTeoria = Object.values(calif.detalle.teoria || {}).reduce((s,v) => s + v.puntos, 0);
+                const totalRecup = Object.values(d).reduce((s,v) => s + (v.puntosRecuperados || 0), 0);
+
+                return `<tr>
+                    <td><strong>${mat}</strong></td>
+                    <td>${(d[1]?.puntos || 0) + (d[1]?.puntosRecuperados || 0)}</td>
+                    <td>${(d[2]?.puntos || 0) + (d[2]?.puntosRecuperados || 0)}</td>
+                    <td>${(d[3]?.puntos || 0) + (d[3]?.puntosRecuperados || 0)}</td>
+                    <td>${(d[4]?.puntos || 0) + (d[4]?.puntosRecuperados || 0)}</td>
+                    <td>${(d[5]?.puntos || 0) + (d[5]?.puntosRecuperados || 0)}</td>
+                    <td>${totalTeoria}</td>
+                    <td>${totalRecup.toFixed(1)}</td>
+                    <td><strong>${calif.puntos}</strong></td>
+                    <td><span class="badge ${liberada ? 'badge-released' : 'badge-locked'}">${liberada ? '🔓 Liberada' : '🔒 Privada'}</span></td>
+                    <td>
+                        <button class="btn-mini ${liberada ? 'btn-orange' : 'btn-blue'}"
+                                onclick="toggleLiberar('${mat}', ${!liberada})">
+                            ${liberada ? 'Ocultar' : 'Liberar'}
+                        </button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        async function toggleLiberar(matricula, nuevoEstado) {
             await supabaseClient
-                .from('calificaciones_finales')
-                .update({ liberada: !estado.data.liberada })
+                .from('estudiantes')
+                .update({ calificacion_liberada: nuevoEstado })
                 .eq('matricula', matricula);
-
             cargarCalificaciones();
         }
 
+        async function liberarTodas() {
+            if (!confirm('¿Liberar las calificaciones de TODOS los alumnos?')) return;
+            const matriculas = window.MATRICULAS_ESTUDIANTES;
+            for (const mat of matriculas) {
+                await supabaseClient.from('estudiantes')
+                    .update({ calificacion_liberada: true })
+                    .eq('matricula', mat);
+            }
+            cargarCalificaciones();
+            alert('✓ Todas las calificaciones liberadas');
+        }
+
+        async function ocultarTodas() {
+            if (!confirm('¿Ocultar las calificaciones de TODOS los alumnos?')) return;
+            const matriculas = window.MATRICULAS_ESTUDIANTES;
+            for (const mat of matriculas) {
+                await supabaseClient.from('estudiantes')
+                    .update({ calificacion_liberada: false })
+                    .eq('matricula', mat);
+            }
+            cargarCalificaciones();
+            alert('✓ Todas las calificaciones ocultas');
+        }
+
+        // ============================================================
+        // EXTENDER TIEMPO
+        // ============================================================
         async function extenderTiempo() {
-            const matricula = '200' + document.getElementById('matriculaExtender').value;
-            const horas = document.getElementById('horasExtender').value;
-            const razon = document.getElementById('razonExtender').value;
+            const matricula = document.getElementById('matriculaTiempo').value.trim();
+            const horas = parseInt(document.getElementById('horasTiempo').value);
+
+            if (!window.esMatriculaValida(matricula)) {
+                alert('❌ Matrícula no registrada');
+                return;
+            }
 
             await supabaseClient
                 .from('estudiantes')
-                .update({ tiempo_extendido: parseInt(horas) })
-                .eq('matricula', matricula);
+                .upsert({ matricula, tiempo_extendido: horas }, { onConflict: 'matricula' });
 
-            alert('✓ Tiempo extendido a ' + horas + ' horas');
-            document.getElementById('matriculaExtender').value = '';
-            document.getElementById('razonExtender').value = '';
+            alert('✓ Tiempo de ' + matricula + ' extendido a ' + horas + ' horas');
+            document.getElementById('matriculaTiempo').value = '';
+            cargarTiempos();
         }
 
-        async function descargarCSV() {
-            const { data } = await supabaseClient
-                .from('calificaciones_finales')
-                .select('*');
-
-            let csv = 'Matrícula,P1,P2,P3,P4,P5,Teoría,Total,Liberada\n';
-            csv += data?.map(d =>
-                `${d.matricula},${d.p1_puntos},${d.p2_puntos},${d.p3_puntos},${d.p4_puntos},${d.p5_puntos},${d.teoria_puntos},${d.total_puntos},${d.liberada ? 'Sí' : 'No'}`
-            ).join('\n');
-
-            descargarArchivo(csv, 'calificaciones.csv', 'text/csv');
+        async function cargarTiempos() {
+            const { data } = await supabaseClient.from('estudiantes').select('*').order('matricula');
+            const tbody = document.getElementById('tablaTiempos');
+            tbody.innerHTML = (data || []).map(est => `
+                <tr>
+                    <td>${est.matricula}</td>
+                    <td>${est.tiempo_extendido || 7}h</td>
+                </tr>
+            `).join('');
         }
 
-        function descargarArchivo(contenido, nombre, tipo) {
-            const blob = new Blob([contenido], { type: tipo });
-            const url = window.URL.createObjectURL(blob);
+        // ============================================================
+        // DESCARGAR EXCEL
+        // ============================================================
+        async function descargarExcel() {
+            const matriculas = window.MATRICULAS_ESTUDIANTES;
+            const [respuestasRes, teoriaRes, estudiantesRes] = await Promise.all([
+                supabaseClient.from('respuestas').select('*'),
+                supabaseClient.from('respuestas_teoria').select('*'),
+                supabaseClient.from('estudiantes').select('*')
+            ]);
+
+            const respuestas = respuestasRes.data || [];
+            const teoria = teoriaRes.data || [];
+            const estudiantes = estudiantesRes.data || [];
+
+            let csv = 'Matricula,P1,P2,P3,P4,P5,Teoria,Recuperacion,Total,Estado,Liberada\n';
+
+            matriculas.forEach(mat => {
+                const est = estudiantes.find(e => e.matricula === mat);
+                const respProb = {};
+                respuestas.filter(r => r.matricula === mat).forEach(r => {
+                    respProb[r.problema_id] = String(r.respuesta_numerica);
+                });
+                const respTeo = {};
+                teoria.filter(t => t.matricula === mat).forEach(t => {
+                    respTeo[t.pregunta_numero] = t.respuesta_seleccionada;
+                });
+
+                if (Object.keys(respProb).length === 0) {
+                    csv += `${mat},,,,,,,,0,No iniciado,No\n`;
+                    return;
+                }
+
+                try {
+                    const calif = window.calcularCalificacion(mat, respProb, respTeo);
+                    const d = calif.detalle.problemas;
+                    const totalTeoria = Object.values(calif.detalle.teoria || {}).reduce((s,v) => s + v.puntos, 0);
+                    const totalRecup = Object.values(d).reduce((s,v) => s + (v.puntosRecuperados || 0), 0);
+                    const liberada = est?.calificacion_liberada ? 'Sí' : 'No';
+                    const estado = est?.calificacion_final != null ? 'Completado' : 'En progreso';
+
+                    csv += `${mat},${(d[1]?.puntos||0)+(d[1]?.puntosRecuperados||0)},${(d[2]?.puntos||0)+(d[2]?.puntosRecuperados||0)},${(d[3]?.puntos||0)+(d[3]?.puntosRecuperados||0)},${(d[4]?.puntos||0)+(d[4]?.puntosRecuperados||0)},${(d[5]?.puntos||0)+(d[5]?.puntosRecuperados||0)},${totalTeoria},${totalRecup.toFixed(1)},${calif.puntos},${estado},${liberada}\n`;
+                } catch (err) {
+                    csv += `${mat},Error,,,,,,,0,Error,No\n`;
+                }
+            });
+
+            const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = nombre;
-            document.body.appendChild(a);
+            a.download = 'calificaciones_' + new Date().toISOString().split('T')[0] + '.csv';
             a.click();
-            window.URL.revokeObjectURL(url);
+            URL.revokeObjectURL(url);
         }
 
-        function cerrarSesion() {
-            window.location.href = 'index.html';
-        }
+        async function descargarRespuestasJSON() {
+            const [respuestasRes, teoriaRes, estudiantesRes, probatoriosRes] = await Promise.all([
+                supabaseClient.from('respuestas').select('*'),
+                supabaseClient.from('respuestas_teoria').select('*'),
+                supabaseClient.from('estudiantes').select('*'),
+                supabaseClient.from('probatorios').select('*')
+            ]);
 
-        function filtrarTabla() {
-            const matricula = document.getElementById('filtroMatricula').value.toLowerCase();
-            const filas = document.querySelectorAll('#tablaCalificaciones tr');
+            const data = {
+                fecha: new Date().toISOString(),
+                estudiantes: estudiantesRes.data,
+                respuestas: respuestasRes.data,
+                teoria: teoriaRes.data,
+                probatorios: probatoriosRes.data
+            };
 
-            filas.forEach(fila => {
-                const mat = fila.cells[0].textContent.toLowerCase();
-                fila.style.display = mat.includes(matricula) ? '' : 'none';
-            });
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'respuestas_' + new Date().toISOString().split('T')[0] + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
         }
     </script>
 </body>
