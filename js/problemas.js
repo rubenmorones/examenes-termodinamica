@@ -682,4 +682,17 @@ function obtenerProblemaUnico(matricula, numeroproblema) {
 // EXPORTAR
 // ============================================================================
 
-module.exports = { problem1Versions, problem2Versions, problem3Versions, problem4Versions, problem5Versions, obtenerProblemaUnico };
+// Para Node.js
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { problem1Versions, problem2Versions, problem3Versions, problem4Versions, problem5Versions, obtenerProblemaUnico };
+}
+
+// Para navegador
+if (typeof window !== 'undefined') {
+    window.problem1Versions = problem1Versions;
+    window.problem2Versions = problem2Versions;
+    window.problem3Versions = problem3Versions;
+    window.problem4Versions = problem4Versions;
+    window.problem5Versions = problem5Versions;
+    window.obtenerProblemaUnico = obtenerProblemaUnico;
+}
