@@ -123,17 +123,28 @@ function obtenerProblemasFallidos(matricula, respuestasProblemas) {
   const examen = generarExamenEstudiante(matricula);
   const fallidos = [];
 
+  console.log('🔍 Evaluando problemas para fallidos. Matrícula:', matricula);
+  console.log('🔍 Respuestas recibidas:', respuestasProblemas);
+
   for (let i = 1; i <= 5; i++) {
     const respuestaEst = respuestasProblemas[i];
-    if (!respuestaEst || respuestaEst.trim() === '') {
-      fallidos.push(i); // sin respuesta = fallido
+    const respStr = respuestaEst != null ? String(respuestaEst).trim() : '';
+
+    if (respStr === '') {
+      console.log('  P' + i + ': sin respuesta → FALLIDO');
+      fallidos.push(i);
       continue;
     }
+
     const prob = examen.problemas['problema' + i];
-    const correcta = validarRespuestaProblema(respuestaEst, prob.solucion, prob.tolerancia);
+    const correcta = validarRespuestaProblema(respStr, prob.solucion, prob.tolerancia);
+    console.log('  P' + i + ': respuesta=' + respStr + ', correcta=' + prob.solucion +
+                ' → ' + (correcta ? 'CORRECTO ✓' : 'FALLIDO ✗'));
+
     if (!correcta) fallidos.push(i);
   }
 
+  console.log('📋 Problemas fallidos:', fallidos);
   return fallidos;
 }
 
