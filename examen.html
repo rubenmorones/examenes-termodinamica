@@ -82,6 +82,7 @@
             </div>
             <div class="modal-body">
                 <p>Sube una imagen o PDF como probatorio de tu solución</p>
+                <p style="color:#ff9800;font-size:0.9em;">⚠️ Tamaño máximo: <strong>250 KB</strong></p>
                 <div class="file-upload">
                     <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png" onchange="manejarArchivo(event)">
                     <label for="fileInput" class="file-label">
@@ -573,9 +574,24 @@
             document.getElementById('btnSubirArchivo').disabled = true;
         }
 
+        const TAMANIO_MAXIMO_KB = 250; // Tamaño máximo del archivo en KB
+
         function manejarArchivo(event) {
             const file = event.target.files[0];
             if (!file) return;
+
+            // Validar tamaño máximo (250 KB)
+            const tamanioKB = file.size / 1024;
+            if (tamanioKB > TAMANIO_MAXIMO_KB) {
+                alert('⚠️ El archivo es muy grande (' + tamanioKB.toFixed(2) + ' KB).\n\n' +
+                      'El tamaño máximo permitido es de ' + TAMANIO_MAXIMO_KB + ' KB.\n\n' +
+                      'Comprime tu PDF o reduce la calidad de la imagen e intenta de nuevo.');
+                event.target.value = ''; // limpiar input
+                archivoSeleccionado = null;
+                document.getElementById('btnSubirArchivo').disabled = true;
+                document.getElementById('filePreview').innerHTML = '';
+                return;
+            }
 
             archivoSeleccionado = file;
             document.getElementById('btnSubirArchivo').disabled = false;
@@ -584,7 +600,7 @@
             preview.innerHTML = `
                 <div class="file-info">
                     <p>✓ Archivo seleccionado: <strong>${file.name}</strong></p>
-                    <p>Tamaño: ${(file.size / 1024).toFixed(2)} KB</p>
+                    <p>Tamaño: ${tamanioKB.toFixed(2)} KB / ${TAMANIO_MAXIMO_KB} KB máximo</p>
                 </div>
             `;
         }
@@ -593,23 +609,44 @@
             if (!archivoSeleccionado) return;
 
             const matricula = localStorage.getItem('matriculaActual');
-            const nombreArchivo = `${matricula}-P${problemaActualSubida}-${Date.now()}`;
+            // Nombre único: matrícula + problema + timestamp + random
+            const ext = archivoSeleccionado.name.split('.').pop();
+            const nombreArchivo = matricula + '-P' + problemaActualSubida + '-' +
+                                   Date.now() + '-' + Math.floor(Math.random() * 1000) + '.' + ext;
 
             try {
+                // Subir archivo a Storage con opción de reemplazo
                 const { data, error } = await supabaseClient.storage
                     .from('probatorios')
-                    .upload(nombreArchivo, archivoSeleccionado);
+                    .upload(nombreArchivo, archivoSeleccionado, {
+                        cacheControl: '3600',
+                        upsert: false
+                    });
 
                 if (error) throw error;
 
-                // Guardar referencia en BD
-                await supabaseClient
+                // Usar UPSERT para permitir reemplazar el probatorio del mismo problema
+                const { error: errorBD } = await supabaseClient
                     .from('probatorios')
-                    .insert([{
+                    .upsert([{
                         matricula: matricula,
                         problema_id: problemaActualSubida,
                         archivo_url: data.path
-                    }]);
+                    }], {
+                        onConflict: 'matricula,problema_id'
+                    });
+
+                if (errorBD) {
+                    // Si upsert falla por falta de constraint, hacer insert normal
+                    console.log('Upsert falló, intentando insert:', errorBD.message);
+                    await supabaseClient
+                        .from('probatorios')
+                        .insert([{
+                            matricula: matricula,
+                            problema_id: problemaActualSubida,
+                            archivo_url: data.path
+                        }]);
+                }
 
                 alert('✓ Probatorio subido correctamente');
                 cerrarModalProbatorio();
