@@ -9,21 +9,36 @@
     <div class="login-container">
         <div class="login-box">
             <div class="logo">
-                <h1>🔄 Reset Examen</h1>
-                <p>Borra todos los datos de una matrícula</p>
+                <h1>🔒 Reset Examen</h1>
+                <p>Acceso restringido al profesor</p>
             </div>
 
-            <div class="form-group">
-                <label for="matricula">Matrícula a resetear</label>
-                <input type="text" id="matricula" value="1111111" maxlength="7">
-                <small>Esto borra: timer, respuestas, probatorios y registros</small>
+            <!-- PASO 1: Pedir contraseña -->
+            <div id="zonaPassword">
+                <div class="form-group">
+                    <label for="password">Contraseña del profesor</label>
+                    <input type="password" id="password" placeholder="Ingresa la contraseña" autofocus>
+                </div>
+                <button class="btn btn-primary" onclick="validarPassword()">
+                    🔓 Ingresar
+                </button>
+                <div id="errorPassword" style="color:#e74c3c;margin-top:10px;display:none;font-size:0.9em;"></div>
             </div>
 
-            <button id="btnReset" class="btn btn-primary" onclick="resetearTodo()">
-                🗑️ Resetear todo
-            </button>
+            <!-- PASO 2: Reset (oculto hasta validar contraseña) -->
+            <div id="zonaReset" style="display:none;">
+                <div class="form-group">
+                    <label for="matricula">Matrícula a resetear</label>
+                    <input type="text" id="matricula" value="1111111" maxlength="7">
+                    <small>Esto borra: timer, respuestas, probatorios y registros</small>
+                </div>
 
-            <div id="log" style="margin-top:20px;font-size:0.85em;font-family:monospace;color:#999;"></div>
+                <button id="btnReset" class="btn btn-primary" onclick="resetearTodo()">
+                    🗑️ Resetear todo
+                </button>
+
+                <div id="log" style="margin-top:20px;font-size:0.85em;font-family:monospace;color:#999;"></div>
+            </div>
 
             <hr>
             <a href="index.html" class="btn btn-secondary" style="text-align:center;display:block;text-decoration:none;">
@@ -36,6 +51,31 @@
     <script src="js/supabase-config.js"></script>
 
     <script>
+        // 🔒 CONTRASEÑA DEL PROFESOR (cambiar aquí si quieres)
+        const PASSWORD_PROFESOR = 'rayado80';
+
+        function validarPassword() {
+            const pwd = document.getElementById('password').value;
+            const errorDiv = document.getElementById('errorPassword');
+
+            if (pwd === PASSWORD_PROFESOR) {
+                document.getElementById('zonaPassword').style.display = 'none';
+                document.getElementById('zonaReset').style.display = 'block';
+                errorDiv.style.display = 'none';
+            } else {
+                errorDiv.textContent = '❌ Contraseña incorrecta';
+                errorDiv.style.display = 'block';
+                document.getElementById('password').value = '';
+            }
+        }
+
+        // Permitir Enter para validar contraseña
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('password').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') validarPassword();
+            });
+        });
+
         function log(msg) {
             const div = document.getElementById('log');
             div.innerHTML += msg + '<br>';
