@@ -126,14 +126,14 @@ const preguntasDiagnosticas = {
   // PROBLEMA 4: Throttling Isoentálpico (válvula) - 20 pts
   4: [
     {
-      pregunta: "Un proceso de estrangulamiento (válvula reductora) se caracteriza principalmente por:",
+      pregunta: "En el análisis de un proceso de estrangulamiento, las suposiciones físicas que conducen a su característica principal son:",
       opciones: {
-        a: "ΔH = 0 (isoentálpico, sin transferencia de calor ni trabajo útil)",
-        b: "ΔS = 0 (isoentrópico)",
-        c: "ΔT = 0 (isotérmico)",
-        d: "ΔV = 0 (isocórico)",
-        e: "ΔP = 0 (isobárico)",
-        f: "Q = -W"
+        a: "Adiabático (Q=0), sin trabajo útil (W=0), flujo estable → ΔH = 0",
+        b: "Reversible y adiabático → ΔS = 0",
+        c: "Pared aislante térmica → ΔT = 0",
+        d: "Volumen constante → ΔV = 0",
+        e: "Presión constante → ΔP = 0",
+        f: "Pared impermeable → ΔU = 0"
       },
       correcta: "a"
     },
@@ -150,14 +150,14 @@ const preguntasDiagnosticas = {
       correcta: "a"
     },
     {
-      pregunta: "Para un líquido en proceso de estrangulamiento isoentálpico, el cambio de temperatura puede calcularse como:",
+      pregunta: "El coeficiente de Joule-Thomson μ_JT, que predice si un fluido se enfría o calienta al pasar por una válvula de estrangulamiento isoentálpica, se define como:",
       opciones: {
-        a: "ΔT = -V·(1-βT)·ΔP / Cp",
-        b: "ΔT = V·βT·ΔP",
-        c: "ΔT = ΔP/Cp",
-        d: "ΔT = 0 (siempre isotérmico)",
-        e: "ΔT = β·ΔP",
-        f: "ΔT = Cp/V"
+        a: "μ_JT = (∂T/∂P)_H",
+        b: "μ_JT = (∂T/∂P)_S",
+        c: "μ_JT = (∂T/∂V)_P",
+        d: "μ_JT = (∂P/∂T)_V",
+        e: "μ_JT = ΔT/ΔP (constante para todo fluido)",
+        f: "μ_JT = T/P"
       },
       correcta: "a"
     }
