@@ -91,9 +91,17 @@ function generarExamenEstudiante(matricula) {
           numero: 5,
           titulo: 'Compresión Isotérmica Reversible de Agua',
           enunciado: p5raw.enunciado,
-          solucion: String(p5raw.solucion.V2),
+          solucion: p5raw.solucion,  // objeto: {V2, W, DH, DU, Q, DS}
           tolerancia: p5raw.tolerancia,
-          unidad: 'cm³',
+          incisos: [
+            { key: 'V2', label: 'a) Volumen final V₂', unidad: 'cm³' },
+            { key: 'W',  label: 'b) Trabajo W',         unidad: 'kJ' },
+            { key: 'DH', label: 'c) ΔH',                unidad: 'kJ' },
+            { key: 'DU', label: 'd) ΔU',                unidad: 'kJ' },
+            { key: 'Q',  label: 'e) Calor Q',           unidad: 'kJ' },
+            { key: 'DS', label: 'f) ΔS',                unidad: 'kJ/K' }
+          ],
+          unidad: 'múltiple',
           explicacion: 'V2=' + p5raw.solucion.V2 + ' cm³, W=' + p5raw.solucion.W + ' kJ, ΔH=' + p5raw.solucion.DH + ' kJ, ΔU=' + p5raw.solucion.DU + ' kJ, Q=' + p5raw.solucion.Q + ' kJ, ΔS=' + p5raw.solucion.DS + ' kJ/K'
         }
       },
@@ -106,9 +114,36 @@ function generarExamenEstudiante(matricula) {
   }
 }
 
-// Validar respuesta numérica con tolerancia ±7%
+// Validar respuesta numérica con tolerancia (default 10%)
 function validarRespuestaProblema(respuestaEstudiante, solucionCorrecta, tolerancia) {
-  const tol = tolerancia || 0.07;
+  const tol = tolerancia || 0.10;
+
+  // Si la solución es un objeto (multi-inciso), validar cada inciso por separado
+  if (typeof solucionCorrecta === 'object' && solucionCorrecta !== null) {
+    if (typeof respuestaEstudiante !== 'object' || respuestaEstudiante === null) {
+      return { correcta: false, fraccionAcierto: 0, totalIncisos: Object.keys(solucionCorrecta).length, incisosCorrectos: 0 };
+    }
+    const keys = Object.keys(solucionCorrecta);
+    let aciertos = 0;
+    keys.forEach(k => {
+      const correcta = parseFloat(solucionCorrecta[k]);
+      const respuesta = parseFloat(respuestaEstudiante[k]);
+      if (!isNaN(correcta) && !isNaN(respuesta)) {
+        const margen = Math.abs(correcta * tol);
+        if (Math.abs(respuesta - correcta) <= margen || (correcta === 0 && Math.abs(respuesta) <= tol)) {
+          aciertos++;
+        }
+      }
+    });
+    return {
+      correcta: aciertos === keys.length,
+      fraccionAcierto: aciertos / keys.length,
+      totalIncisos: keys.length,
+      incisosCorrectos: aciertos
+    };
+  }
+
+  // Caso simple: un solo valor numérico
   const correcta = parseFloat(solucionCorrecta);
   const respuesta = parseFloat(respuestaEstudiante);
 
@@ -128,20 +163,29 @@ function obtenerProblemasFallidos(matricula, respuestasProblemas) {
 
   for (let i = 1; i <= 5; i++) {
     const respuestaEst = respuestasProblemas[i];
-    const respStr = respuestaEst != null ? String(respuestaEst).trim() : '';
 
-    if (respStr === '') {
+    if (respuestaEst == null || (typeof respuestaEst === 'string' && respuestaEst.trim() === '')) {
       console.log('  P' + i + ': sin respuesta → FALLIDO');
       fallidos.push(i);
       continue;
     }
 
     const prob = examen.problemas['problema' + i];
-    const correcta = validarRespuestaProblema(respStr, prob.solucion, prob.tolerancia);
-    console.log('  P' + i + ': respuesta=' + respStr + ', correcta=' + prob.solucion +
-                ' → ' + (correcta ? 'CORRECTO ✓' : 'FALLIDO ✗'));
+    const resultado = validarRespuestaProblema(respuestaEst, prob.solucion, prob.tolerancia);
 
-    if (!correcta) fallidos.push(i);
+    // Determinar si es completamente correcto
+    let esCorrecta;
+    if (typeof resultado === 'object') {
+      esCorrecta = resultado.correcta; // todos los incisos correctos
+      console.log('  P' + i + ' (multi-inciso): ' + resultado.incisosCorrectos + '/' + resultado.totalIncisos +
+                  ' → ' + (esCorrecta ? 'CORRECTO ✓' : 'FALLIDO ✗'));
+    } else {
+      esCorrecta = resultado;
+      console.log('  P' + i + ': respuesta=' + respuestaEst + ', correcta=' + prob.solucion +
+                  ' → ' + (esCorrecta ? 'CORRECTO ✓' : 'FALLIDO ✗'));
+    }
+
+    if (!esCorrecta) fallidos.push(i);
   }
 
   console.log('📋 Problemas fallidos:', fallidos);
@@ -206,8 +250,22 @@ function calcularCalificacion(matricula, respuestasProblemas, respuestasTeoria) 
   const problemasFallidos = [];
   for (let i = 1; i <= 5; i++) {
     const prob = examen.problemas['problema' + i];
-    const correcta = validarRespuestaProblema(respuestasProblemas[i], prob.solucion, prob.tolerancia);
-    if (correcta) {
+    const resultado = validarRespuestaProblema(respuestasProblemas[i], prob.solucion, prob.tolerancia);
+
+    if (typeof resultado === 'object') {
+      // Multi-inciso: puntaje proporcional a fracción de aciertos
+      const puntosObtenidos = puntosProblemas[i] * resultado.fraccionAcierto;
+      puntos += puntosObtenidos;
+      detalle.problemas[i] = {
+        puntos: Math.round(puntosObtenidos * 10) / 10,
+        correcta: resultado.correcta,
+        recuperacion: !resultado.correcta,
+        valor: puntosProblemas[i],
+        incisosCorrectos: resultado.incisosCorrectos,
+        totalIncisos: resultado.totalIncisos
+      };
+      if (!resultado.correcta) problemasFallidos.push(i);
+    } else if (resultado) {
       puntos += puntosProblemas[i];
       detalle.problemas[i] = { puntos: puntosProblemas[i], correcta: true, recuperacion: false };
     } else {

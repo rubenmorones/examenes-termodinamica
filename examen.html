@@ -306,6 +306,7 @@
                         enunciado: examenActual.problemas.problema5.enunciado,
                         solucion: examenActual.problemas.problema5.solucion,
                         tolerancia: examenActual.problemas.problema5.tolerancia,
+                        incisos: examenActual.problemas.problema5.incisos,
                         unidad: examenActual.problemas.problema5.unidad,
                         explicacion: examenActual.problemas.problema5.explicacion
                     }
@@ -471,6 +472,49 @@
             // Renderizar contenido
             const p = problemas[numero];
             const animacion = getAnimacionProblema(numero);
+
+            // Generar bloque de respuesta(s): múltiples incisos o uno solo
+            let respuestaHTML = '';
+            if (p.incisos && Array.isArray(p.incisos) && p.incisos.length > 0) {
+                // Múltiples incisos
+                const respObj = (typeof respuestas[numero] === 'object' && respuestas[numero] !== null) ? respuestas[numero] : {};
+                respuestaHTML = `
+                    <div class="respuesta-box">
+                        <h4 style="margin-bottom:0.5rem;">Tus respuestas (un campo por inciso):</h4>
+                        ${p.incisos.map(inc => `
+                            <div style="margin-bottom:0.6rem;">
+                                <label for="respuesta${numero}_${inc.key}" style="display:block;margin-bottom:0.25rem;">${inc.label} <small style="color:#aaa;">(${inc.unidad})</small></label>
+                                <input
+                                    type="number"
+                                    id="respuesta${numero}_${inc.key}"
+                                    step="any"
+                                    placeholder="Valor numérico"
+                                    value="${(respObj[inc.key] !== undefined ? respObj[inc.key] : '')}"
+                                    oninput="actualizarRespuestaInciso(${numero}, '${inc.key}', this.value)"
+                                    style="width:100%;"
+                                >
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else {
+                // Un solo campo de respuesta
+                respuestaHTML = `
+                    <div class="respuesta-box">
+                        <label for="respuesta${numero}">Tu Respuesta:</label>
+                        <input
+                            type="number"
+                            id="respuesta${numero}"
+                            step="0.01"
+                            placeholder="Ingresa el valor numérico"
+                            value="${respuestas[numero] || ''}"
+                            oninput="actualizarRespuesta(${numero}, this.value)"
+                        >
+                        <small>Unidad: <strong>${p.unidad}</strong></small>
+                    </div>
+                `;
+            }
+
             const html = `
                 <div class="problema-header">
                     <h3>${p.titulo}</h3>
@@ -485,18 +529,7 @@
 
                     ${animacion}
 
-                    <div class="respuesta-box">
-                        <label for="respuesta${numero}">Tu Respuesta:</label>
-                        <input
-                            type="number"
-                            id="respuesta${numero}"
-                            step="0.01"
-                            placeholder="Ingresa el valor numérico"
-                            value="${respuestas[numero] || ''}"
-                            oninput="actualizarRespuesta(${numero}, this.value)"
-                        >
-                        <small>Unidad: <strong>${p.unidad}</strong></small>
-                    </div>
+                    ${respuestaHTML}
 
                     <button class="btn btn-secondary" onclick="abrirModalProbatorio(${numero})">
                         📎 Subir Probatorio (PDF/JPG)
@@ -508,11 +541,21 @@
 
             document.getElementById('problemaContent').innerHTML = html;
 
-            // Restaurar valor guardado
-            const input = document.getElementById(`respuesta${numero}`);
-            if (input && respuestas[numero]) {
-                input.value = respuestas[numero];
+            // Restaurar valor guardado para el caso de un solo campo
+            if (!p.incisos) {
+                const input = document.getElementById(`respuesta${numero}`);
+                if (input && respuestas[numero]) {
+                    input.value = respuestas[numero];
+                }
             }
+        }
+
+        function actualizarRespuestaInciso(numero, key, valor) {
+            if (typeof respuestas[numero] !== 'object' || respuestas[numero] === null) {
+                respuestas[numero] = {};
+            }
+            respuestas[numero][key] = valor;
+            localStorage.setItem('respuestasExamen', JSON.stringify(respuestas));
         }
 
         function actualizarRespuesta(numero, valor) {
@@ -680,13 +723,27 @@
 
             // Guardar respuestas
             for (let i = 1; i <= 5; i++) {
-                if (respuestas[i]) {
+                const r = respuestas[i];
+                if (r === undefined || r === null || r === '') continue;
+
+                if (typeof r === 'object') {
+                    // Respuesta multi-inciso: guardar como JSON-string en respuesta_numerica
+                    // (en respuesta_numerica guardamos NaN o el primer valor; el detalle va en respuesta_texto)
                     await supabaseClient
                         .from('respuestas')
                         .upsert({
                             matricula: matricula,
                             problema_id: i,
-                            respuesta_numerica: parseFloat(respuestas[i])
+                            respuesta_numerica: parseFloat(r.V2) || 0,
+                            respuesta_texto: JSON.stringify(r)
+                        }, { onConflict: 'matricula,problema_id' });
+                } else {
+                    await supabaseClient
+                        .from('respuestas')
+                        .upsert({
+                            matricula: matricula,
+                            problema_id: i,
+                            respuesta_numerica: parseFloat(r)
                         }, { onConflict: 'matricula,problema_id' });
                 }
             }
@@ -700,13 +757,27 @@
             // Verificar que todos los problemas tengan respuesta
             const sinRespuesta = [];
             for (let i = 1; i <= 5; i++) {
-                if (!respuestas[i] || respuestas[i].trim() === '') {
-                    sinRespuesta.push(i);
+                const r = respuestas[i];
+                const p = problemas[i];
+
+                if (p && p.incisos && Array.isArray(p.incisos)) {
+                    // Multi-inciso: requerir TODOS los incisos llenos
+                    if (!r || typeof r !== 'object') {
+                        sinRespuesta.push(i);
+                        continue;
+                    }
+                    const faltan = p.incisos.some(inc => r[inc.key] === undefined || String(r[inc.key]).trim() === '');
+                    if (faltan) sinRespuesta.push(i);
+                } else {
+                    // Un solo campo
+                    if (!r || (typeof r === 'string' && r.trim() === '')) {
+                        sinRespuesta.push(i);
+                    }
                 }
             }
 
             if (sinRespuesta.length > 0) {
-                alert(`⚠️ Debes responder TODOS los problemas\n\nFaltan respuestas en: Problema(s) ${sinRespuesta.join(', ')}`);
+                alert(`⚠️ Debes responder TODOS los problemas (todos los incisos)\n\nFaltan respuestas en: Problema(s) ${sinRespuesta.join(', ')}`);
                 return;
             }
 

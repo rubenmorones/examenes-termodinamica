@@ -376,7 +376,7 @@ const problem4Versions = [
     {
         id: 4,
         titulo: "Expansión Isoentálpica en Válvula Reductora",
-        enunciado: "En una planta de procesamiento, isobutano líquido fluye a través de una válvula reductora de presión. El proceso es isoentálpico (sin transferencia de calor ni trabajo mecánico útil). El fluido entra a 360 K y 4000 kPa, y sale a 2000 kPa. El isobutano tiene una masa molar de 58.123 g/mol y su calor específico es 2.78 J/(g·K). Usando correlaciones termodinámicas para determinar volúmenes molares a 359, 360 y 361 K, calcula: a) la variación de entropía del isobutano durante la expansión isoentálpica, b) el coeficiente de dilatación térmica volumétrica, c) el cambio de temperatura resultante.",
+        enunciado: "En una planta de procesamiento, isobutano líquido fluye a través de una válvula reductora de presión. El proceso es isoentálpico (sin transferencia de calor ni trabajo mecánico útil). El fluido entra a 360 K y 4000 kPa, y sale a 2000 kPa. El isobutano tiene una masa molar de 58.123 g/mol y su calor específico es 2.78 J/(g·K). Usando correlaciones termodinámicas, calcula el cambio de temperatura resultante (ΔT en K).",
         solucion: "-0.768",
         tolerancia: 0.10,
         unidad: "K",
