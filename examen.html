@@ -251,6 +251,12 @@
                 return;
             }
 
+            // Bloqueo: si ya pasó a fase 2, no permitir regresar a problemas
+            if (localStorage.getItem('fase') === '2') {
+                window.location.href = 'teoria.html';
+                return;
+            }
+
             // Si es 1111111 (DEMO profesor), usar la primera matrícula real para mostrar el examen
             if (matricula === '1111111') {
                 console.log('🎯 DEMO: Acceso del profesor');
