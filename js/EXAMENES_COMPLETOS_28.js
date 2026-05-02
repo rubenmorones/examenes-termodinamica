@@ -136,18 +136,26 @@ function generarExamenEstudiante(matricula) {
     throw new Error(`Matrícula ${matricula} no válida. Debe estar entre 2001001 y 2001028`);
   }
 
+  // Usar versiones del navegador o del módulo
+  const p1 = typeof window !== 'undefined' ? window.problem1Versions : problem1Versions;
+  const p2 = typeof window !== 'undefined' ? window.problem2Versions : problem2Versions;
+  const p3 = typeof window !== 'undefined' ? window.problem3Versions : problem3Versions;
+  const p4 = typeof window !== 'undefined' ? window.problem4Versions : problem4Versions;
+  const p5 = typeof window !== 'undefined' ? window.problem5Versions : problem5Versions;
+
   // Obtener versiones de problemas
-  const problema1 = obtenerVersionProblema(problem1Versions, matricula);
-  const problema2 = obtenerVersionProblema(problem2Versions, matricula);
-  const problema3 = obtenerVersionProblema(problem3Versions, matricula);
-  const problema4 = obtenerVersionProblema(problem4Versions, matricula);
-  const problema5 = obtenerVersionProblema5(problem5Versions, matricula);
+  const problema1 = obtenerVersionProblema(p1, matricula);
+  const problema2 = obtenerVersionProblema(p2, matricula);
+  const problema3 = obtenerVersionProblema(p3, matricula);
+  const problema4 = obtenerVersionProblema(p4, matricula);
+  const problema5 = obtenerVersionProblema5(p5, matricula);
 
   // Seleccionar preguntas de teoría
   const matriculasPreguntasTeoria = seleccionarPreguntasAleatorias(matricula, 10);
+  const pt = typeof window !== 'undefined' ? window.preguntasTeoria : preguntasTeoria;
   const preguntasTeoriaSeleccionadas = matriculasPreguntasTeoria.map(mat => ({
     matricula: mat,
-    ...preguntasTeoria[mat]
+    ...pt[mat]
   }));
 
   // Construir examen completo
