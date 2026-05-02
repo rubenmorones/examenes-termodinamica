@@ -106,23 +106,15 @@
                 return;
             }
 
-            // MODO DEMO: matrícula 1111111 (acceso directo del profesor)
-            if (matricula === '1111111') {
-                console.log('✅ Acceso DEMO (profesor)');
-                localStorage.setItem('matriculaActual', matricula);
-                window.location.href = 'examen.html';
-                return;
-            }
-
+            // Verificar/crear estudiante en Supabase (todas las matrículas, incluyendo 1111111)
             try {
-                // Verificar/crear estudiante en Supabase
                 const { data, error } = await supabaseClient
                     .from('estudiantes')
                     .select('*')
                     .eq('matricula', matricula)
-                    .single();
+                    .maybeSingle();
 
-                if (error || !data) {
+                if (!data) {
                     const { error: createError } = await supabaseClient
                         .from('estudiantes')
                         .insert([{ matricula: matricula }]);
@@ -130,6 +122,13 @@
                         mostrarError('Error al registrar: ' + createError.message);
                         return;
                     }
+                    console.log('✓ Estudiante registrado:', matricula);
+                } else {
+                    console.log('✓ Estudiante existente:', matricula);
+                }
+
+                if (matricula === '1111111') {
+                    console.log('🎯 Acceso DEMO (profesor)');
                 }
 
                 localStorage.setItem('matriculaActual', matricula);
