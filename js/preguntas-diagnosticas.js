@@ -98,14 +98,14 @@ const preguntasDiagnosticas = {
       correcta: "b"
     },
     {
-      pregunta: "Para gas ideal isotérmico, ΔS_sistema durante una compresión de P₁ a P₂ es:",
+      pregunta: "Cuando un gas ideal se comprime isotérmicamente, el cambio de entropía del sistema es:",
       opciones: {
-        a: "ΔS = nR·ln(P₁/P₂) (negativo si comprime)",
-        b: "ΔS = nR·ln(P₂/P₁) (positivo siempre)",
-        c: "ΔS = 0",
-        d: "ΔS = nCp·ln(P₂/P₁)",
-        e: "ΔS = Q·ln(P₂/P₁)",
-        f: "ΔS = -nCv·ln(P₂/P₁)"
+        a: "Negativo, ya que el volumen disminuye y el sistema se ordena más",
+        b: "Positivo, ya que la temperatura no cambia",
+        c: "Cero, ya que ΔU = 0 y el proceso es reversible",
+        d: "Igual al trabajo realizado",
+        e: "Igual al calor transferido a entropía constante",
+        f: "Depende del valor de Cv"
       },
       correcta: "a"
     },
@@ -126,14 +126,14 @@ const preguntasDiagnosticas = {
   // PROBLEMA 4: Throttling Isoentálpico (válvula) - 20 pts
   4: [
     {
-      pregunta: "Un proceso de throttling (válvula reductora) se caracteriza por:",
+      pregunta: "Un proceso de estrangulamiento (válvula reductora) se caracteriza principalmente por:",
       opciones: {
-        a: "ΔH = 0 (isoentálpico)",
+        a: "ΔH = 0 (isoentálpico, sin transferencia de calor ni trabajo útil)",
         b: "ΔS = 0 (isoentrópico)",
         c: "ΔT = 0 (isotérmico)",
         d: "ΔV = 0 (isocórico)",
         e: "ΔP = 0 (isobárico)",
-        f: "Q = W"
+        f: "Q = -W"
       },
       correcta: "a"
     },
@@ -150,7 +150,7 @@ const preguntasDiagnosticas = {
       correcta: "a"
     },
     {
-      pregunta: "Para un líquido en throttling isoentálpico, el cambio de temperatura aproximado es:",
+      pregunta: "Para un líquido en proceso de estrangulamiento isoentálpico, el cambio de temperatura puede calcularse como:",
       opciones: {
         a: "ΔT = -V·(1-βT)·ΔP / Cp",
         b: "ΔT = V·βT·ΔP",
@@ -190,14 +190,14 @@ const preguntasDiagnosticas = {
       correcta: "a"
     },
     {
-      pregunta: "Durante la compresión isotérmica reversible de un líquido, el calor transferido Q es:",
+      pregunta: "El cambio de entropía del sistema para la compresión isotérmica reversible de un líquido es:",
       opciones: {
-        a: "Q = -T·V·β·ΔP (sale calor del sistema)",
-        b: "Q = +T·V·β·ΔP (entra calor)",
-        c: "Q = 0 (proceso adiabático)",
-        d: "Q = ΔH",
-        e: "Q = -ΔU",
-        f: "Q = W·T"
+        a: "ΔS_sistema = -V·β·ΔP (negativo, sale calor del sistema)",
+        b: "ΔS_sistema = +V·β·ΔP (positivo)",
+        c: "ΔS_sistema = 0 (proceso reversible)",
+        d: "ΔS_sistema = Cp·ln(T₂/T₁) = 0 (isotérmico)",
+        e: "ΔS_sistema = ΔH/T",
+        f: "ΔS_sistema = κ·ΔP"
       },
       correcta: "a"
     }
