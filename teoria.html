@@ -123,6 +123,7 @@
     <script src="js/problema1-real.js"></script>
     <script src="js/problemas.js"></script>
     <script src="js/BANCO_PREGUNTAS_TEORIA_28.js"></script>
+    <script src="js/preguntas-diagnosticas.js"></script>
     <script src="js/exam-generator.js"></script>
 
     <script>
@@ -163,14 +164,22 @@
                 // Cargar examen real
                 examenActual = generarExamenEstudiante(matricula);
 
-                // Convertir preguntas al formato esperado
-                listaPreguntas = examenActual.teoría.preguntas || [];
+                // Obtener respuestas guardadas de la fase 1 (problemas)
+                const respuestasProblemas = JSON.parse(localStorage.getItem('respuestasExamen') || '{}');
+
+                // Determinar qué problemas fallaron (tolerancia ±7%)
+                const problemasFallidos = window.obtenerProblemasFallidos(matricula, respuestasProblemas);
+                console.log('📋 Problemas fallidos:', problemasFallidos);
+
+                // Construir lista: 10 teoría + 3 diagnósticas por problema fallido
+                listaPreguntas = window.construirPreguntasFase2(matricula, problemasFallidos);
                 totalPreguntas = listaPreguntas.length;
 
-                console.log('✅ Examen teórico cargado:', totalPreguntas, 'preguntas');
+                console.log('✅ Total de preguntas en fase 2:', totalPreguntas,
+                    '(10 teoría +', problemasFallidos.length * 3, 'diagnósticas)');
             } catch (err) {
                 console.error('Error cargando examen:', err);
-                alert('Error: No se pudo cargar las preguntas de teoría');
+                alert('ERROR: ' + err.message);
                 window.location.href = 'index.html';
                 return;
             }
@@ -388,9 +397,31 @@
         }
 
         async function calificarExamen(matricula) {
-            // Aquí iría la lógica completa de calificación
-            // Por ahora es un placeholder
-            console.log('Calificando examen de', matricula);
+            try {
+                const respuestasProblemas = JSON.parse(localStorage.getItem('respuestasExamen') || '{}');
+                const calificacion = window.calcularCalificacion(matricula, respuestasProblemas, respuestasTeoria);
+
+                console.log('📊 Calificación final:', calificacion.puntos + '/' + calificacion.sobre);
+                console.log('Detalle:', calificacion.detalle);
+
+                // Guardar calificación en Supabase
+                try {
+                    await supabaseClient
+                        .from('estudiantes')
+                        .update({
+                            calificacion_final: calificacion.puntos,
+                            fecha_envio: new Date().toISOString()
+                        })
+                        .eq('matricula', matricula);
+                } catch (err) {
+                    console.log('No se pudo guardar la calificación:', err);
+                }
+
+                return calificacion;
+            } catch (err) {
+                console.error('Error calificando:', err);
+                return { puntos: 0, sobre: 100, detalle: {} };
+            }
         }
     </script>
 </body>

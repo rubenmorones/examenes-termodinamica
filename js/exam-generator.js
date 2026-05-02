@@ -100,6 +100,120 @@ function generarExamenEstudiante(matricula) {
   }
 }
 
+// Validar respuesta numérica con tolerancia ±7%
+function validarRespuestaProblema(respuestaEstudiante, solucionCorrecta, tolerancia) {
+  const tol = tolerancia || 0.07;
+  const correcta = parseFloat(solucionCorrecta);
+  const respuesta = parseFloat(respuestaEstudiante);
+
+  if (isNaN(correcta) || isNaN(respuesta)) return false;
+
+  const margen = Math.abs(correcta * tol);
+  return Math.abs(respuesta - correcta) <= margen;
+}
+
+// Determinar qué problemas fallaron (tolerancia ±7%)
+function obtenerProblemasFallidos(matricula, respuestasProblemas) {
+  const examen = generarExamenEstudiante(matricula);
+  const fallidos = [];
+
+  for (let i = 1; i <= 5; i++) {
+    const respuestaEst = respuestasProblemas[i];
+    if (!respuestaEst || respuestaEst.trim() === '') {
+      fallidos.push(i); // sin respuesta = fallido
+      continue;
+    }
+    const prob = examen.problemas['problema' + i];
+    const correcta = validarRespuestaProblema(respuestaEst, prob.solucion, prob.tolerancia);
+    if (!correcta) fallidos.push(i);
+  }
+
+  return fallidos;
+}
+
+// Construir lista completa de preguntas para fase 2 (teoría + diagnósticas)
+function construirPreguntasFase2(matricula, problemasFallidos) {
+  const examen = generarExamenEstudiante(matricula);
+  const lista = [];
+
+  // 10 preguntas de teoría
+  examen.teoría.preguntas.forEach((p, i) => {
+    lista.push({
+      tipo: 'teoria',
+      numero: i + 1,
+      pregunta: p.pregunta,
+      opciones: p.opciones,
+      correcta: p.respuestaCorrecta
+    });
+  });
+
+  // 3 preguntas diagnósticas por cada problema fallido
+  problemasFallidos.forEach(numProblema => {
+    const diags = window.preguntasDiagnosticas[numProblema] || [];
+    diags.forEach((d, i) => {
+      lista.push({
+        tipo: 'diagnostica',
+        problema: numProblema,
+        numero: lista.length + 1,
+        pregunta: '[Diagnóstica P' + numProblema + '] ' + d.pregunta,
+        opciones: d.opciones,
+        correcta: d.correcta
+      });
+    });
+  });
+
+  return lista;
+}
+
+// Calcular calificación final
+function calcularCalificacion(matricula, respuestasProblemas, respuestasTeoria) {
+  const examen = generarExamenEstudiante(matricula);
+  let puntos = 0;
+  const detalle = { problemas: {}, teoria: {}, diagnostica: {} };
+
+  // Problemas: P1-P4 = 20 pts c/u, P5 = 10 pts (total 90)
+  const puntosProblemas = { 1: 20, 2: 20, 3: 20, 4: 20, 5: 10 };
+  for (let i = 1; i <= 5; i++) {
+    const prob = examen.problemas['problema' + i];
+    const correcta = validarRespuestaProblema(respuestasProblemas[i], prob.solucion, prob.tolerancia);
+    if (correcta) {
+      puntos += puntosProblemas[i];
+      detalle.problemas[i] = { puntos: puntosProblemas[i], correcta: true };
+    } else {
+      detalle.problemas[i] = { puntos: 0, correcta: false };
+    }
+  }
+
+  // Teoría: 10 preguntas × 1 pto cada una
+  const fallidos = obtenerProblemasFallidos(matricula, respuestasProblemas);
+  const lista = construirPreguntasFase2(matricula, fallidos);
+  lista.forEach((p, idx) => {
+    const numUI = idx + 1;
+    if (respuestasTeoria[numUI] === p.correcta) {
+      if (p.tipo === 'teoria') {
+        puntos += 1;
+        detalle.teoria[numUI] = { puntos: 1, correcta: true };
+      } else {
+        // Las diagnósticas dan media oportunidad de recuperar puntos
+        puntos += 2; // 2 puntos por diagnóstica correcta (de 6 posibles por problema)
+        detalle.diagnostica[numUI] = { puntos: 2, correcta: true };
+      }
+    } else {
+      if (p.tipo === 'teoria') {
+        detalle.teoria[numUI] = { puntos: 0, correcta: false };
+      } else {
+        detalle.diagnostica[numUI] = { puntos: 0, correcta: false };
+      }
+    }
+  });
+
+  return { puntos, sobre: 100, detalle };
+}
+
 if (typeof window !== 'undefined') {
   window.generarExamenEstudiante = generarExamenEstudiante;
+  window.validarRespuestaProblema = validarRespuestaProblema;
+  window.obtenerProblemasFallidos = obtenerProblemasFallidos;
+  window.construirPreguntasFase2 = construirPreguntasFase2;
+  window.calcularCalificacion = calcularCalificacion;
 }
