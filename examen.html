@@ -82,7 +82,7 @@
             </div>
             <div class="modal-body">
                 <p>Sube una imagen o PDF como probatorio de tu solución</p>
-                <p style="color:#ff9800;font-size:0.9em;">⚠️ Tamaño máximo: <strong>250 KB</strong></p>
+                <p style="color:#ff9800;font-size:0.9em;">⚠️ Tamaño máximo: <strong>1 MB</strong></p>
                 <div class="file-upload">
                     <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png" onchange="manejarArchivo(event)">
                     <label for="fileInput" class="file-label">
@@ -574,17 +574,17 @@
             document.getElementById('btnSubirArchivo').disabled = true;
         }
 
-        const TAMANIO_MAXIMO_KB = 250; // Tamaño máximo del archivo en KB
+        const TAMANIO_MAXIMO_KB = 1024; // Tamaño máximo del archivo en KB (1 MB)
 
         function manejarArchivo(event) {
             const file = event.target.files[0];
             if (!file) return;
 
-            // Validar tamaño máximo (250 KB)
+            // Validar tamaño máximo (1 MB)
             const tamanioKB = file.size / 1024;
             if (tamanioKB > TAMANIO_MAXIMO_KB) {
-                alert('⚠️ El archivo es muy grande (' + tamanioKB.toFixed(2) + ' KB).\n\n' +
-                      'El tamaño máximo permitido es de ' + TAMANIO_MAXIMO_KB + ' KB.\n\n' +
+                alert('⚠️ El archivo es muy grande (' + (tamanioKB / 1024).toFixed(2) + ' MB).\n\n' +
+                      'El tamaño máximo permitido es de 1 MB.\n\n' +
                       'Comprime tu PDF o reduce la calidad de la imagen e intenta de nuevo.');
                 event.target.value = ''; // limpiar input
                 archivoSeleccionado = null;
