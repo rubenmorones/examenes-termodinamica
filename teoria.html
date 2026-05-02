@@ -318,7 +318,19 @@
         }
 
         function iniciarTimer() {
-            tiempoInicio = Date.now();
+            const matricula = localStorage.getItem('matriculaActual');
+            // Mismo timer que en fase 1 (continúa contando desde el inicio del examen)
+            const claveTimer = 'tiempoInicioExamen_' + matricula;
+
+            let tiempoGuardado = localStorage.getItem(claveTimer);
+            if (tiempoGuardado) {
+                tiempoInicio = parseInt(tiempoGuardado);
+                console.log('⏰ Reanudando timer en fase 2 desde inicio original:', new Date(tiempoInicio));
+            } else {
+                tiempoInicio = Date.now();
+                localStorage.setItem(claveTimer, tiempoInicio.toString());
+            }
+
             const tiempoMs = tiempoExtendido * 3600000;
 
             const interval = setInterval(() => {

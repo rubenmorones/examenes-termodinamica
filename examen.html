@@ -515,7 +515,20 @@
         }
 
         function iniciarTimer() {
-            tiempoInicio = Date.now();
+            const matricula = localStorage.getItem('matriculaActual');
+            const claveTimer = 'tiempoInicioExamen_' + matricula;
+
+            // Recuperar tiempo de inicio guardado o crear uno nuevo
+            let tiempoGuardado = localStorage.getItem(claveTimer);
+            if (tiempoGuardado) {
+                tiempoInicio = parseInt(tiempoGuardado);
+                console.log('⏰ Reanudando timer desde inicio original:', new Date(tiempoInicio));
+            } else {
+                tiempoInicio = Date.now();
+                localStorage.setItem(claveTimer, tiempoInicio.toString());
+                console.log('⏰ Timer iniciado por primera vez:', new Date(tiempoInicio));
+            }
+
             const tiempoMs = tiempoExtendido * 3600000; // horas a ms
 
             const interval = setInterval(() => {
