@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Examen - TEST</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="examen-container">
+        <header class="examen-header">
+            <div class="header-left">
+                <h2>Fase 1: Problemas (TEST)</h2>
+                <p id="matriculaDisplay">Matrícula: 2001001</p>
+            </div>
+            <div class="timer-box">
+                <div id="timerDisplay" class="timer">7:00:00</div>
+                <p>Tiempo restante</p>
+            </div>
+        </header>
+
+        <div class="examen-content">
+            <aside class="problema-selector">
+                <h3>Problemas</h3>
+                <div class="problema-list">
+                    <button class="problema-btn active" data-problema="1" onclick="mostrarProblema(1)">
+                        <span class="numero">1</span>
+                        <span class="titulo">Segunda Ley</span>
+                        <span class="status">●</span>
+                    </button>
+                    <button class="problema-btn" data-problema="2" onclick="mostrarProblema(2)">
+                        <span class="numero">2</span>
+                        <span class="titulo">Máquina</span>
+                        <span class="status">●</span>
+                    </button>
+                </div>
+                <div class="progress-box">
+                    <p>Probatorios: <strong id="probatoriosCount">0/2</strong></p>
+                </div>
+            </aside>
+
+            <main class="problema-area">
+                <div id="problemaContent"></div>
+            </main>
+        </div>
+
+        <footer class="examen-footer">
+            <button class="btn btn-success" onclick="alert('✓ Test completado')">
+                ✓ Terminar Test
+            </button>
+            <small>Test de interfaz</small>
+        </footer>
+    </div>
+
+    <script>
+        // DATOS DE PRUEBA EMBEBIDOS
+        const problemas = {
+            1: {
+                titulo: "Problema 1: Segunda Ley de la Termodinámica",
+                enunciado: "Se transfieren 5200 J de calor a un sistema. T_inicial = 200 K, T_final = 250 K. Calcula ΔS en J/K.",
+                unidad: "J/K",
+                solucion: "24.82"
+            },
+            2: {
+                titulo: "Problema 2: Máquina Térmica",
+                enunciado: "Una máquina térmica recibe 1000 J de una fuente caliente a 400 K y cede 600 J a un sumidero frío a 300 K. Calcula la eficiencia.",
+                unidad: "%",
+                solucion: "40"
+            }
+        };
+
+        let respuestas = { 1: '', 2: '' };
+
+        function mostrarProblema(numero) {
+            const p = problemas[numero];
+            const html = `
+                <div class="problema-header">
+                    <h3>${p.titulo}</h3>
+                    <span class="puntos">Puntaje: 20 puntos</span>
+                </div>
+
+                <div class="problema-body">
+                    <div class="enunciado-box">
+                        <h4>📋 Enunciado</h4>
+                        <p>${p.enunciado}</p>
+                    </div>
+
+                    <div class="respuesta-box">
+                        <label for="respuesta${numero}">Tu Respuesta:</label>
+                        <input
+                            type="number"
+                            id="respuesta${numero}"
+                            step="0.01"
+                            placeholder="Ingresa el valor numérico"
+                            value="${respuestas[numero] || ''}"
+                            oninput="respuestas[${numero}] = this.value"
+                        >
+                        <small>Unidad: <strong>${p.unidad}</strong></small>
+                    </div>
+
+                    <button class="btn btn-secondary" onclick="alert('Test: Probatorio subido')">
+                        📎 Subir Probatorio (PDF/JPG)
+                    </button>
+                </div>
+            `;
+
+            document.getElementById('problemaContent').innerHTML = html;
+
+            // Actualizar botones
+            document.querySelectorAll('.problema-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-problema="${numero}"]`).classList.add('active');
+        }
+
+        window.addEventListener('load', function() {
+            console.log('✅ Página de TEST cargada correctamente');
+            mostrarProblema(1);
+        });
+    </script>
+</body>
+</html>
