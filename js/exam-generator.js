@@ -173,19 +173,20 @@ function obtenerProblemasFallidos(matricula, respuestasProblemas) {
     const prob = examen.problemas['problema' + i];
     const resultado = validarRespuestaProblema(respuestaEst, prob.solucion, prob.tolerancia);
 
-    // Determinar si es completamente correcto
-    let esCorrecta;
+    // Para multi-inciso (P5): solo es "fallido" si TODOS los incisos están mal (0 aciertos)
+    // Para problemas simples: fallido si la respuesta no está dentro de tolerancia
+    let esFallido;
     if (typeof resultado === 'object') {
-      esCorrecta = resultado.correcta; // todos los incisos correctos
+      esFallido = resultado.incisosCorrectos === 0;
       console.log('  P' + i + ' (multi-inciso): ' + resultado.incisosCorrectos + '/' + resultado.totalIncisos +
-                  ' → ' + (esCorrecta ? 'CORRECTO ✓' : 'FALLIDO ✗'));
+                  ' aciertos → ' + (esFallido ? 'FALLIDO (entra a diagnósticas)' : 'OK (al menos 1 acierto)'));
     } else {
-      esCorrecta = resultado;
+      esFallido = !resultado;
       console.log('  P' + i + ': respuesta=' + respuestaEst + ', correcta=' + prob.solucion +
-                  ' → ' + (esCorrecta ? 'CORRECTO ✓' : 'FALLIDO ✗'));
+                  ' → ' + (esFallido ? 'FALLIDO ✗' : 'CORRECTO ✓'));
     }
 
-    if (!esCorrecta) fallidos.push(i);
+    if (esFallido) fallidos.push(i);
   }
 
   console.log('📋 Problemas fallidos:', fallidos);
@@ -243,8 +244,8 @@ function calcularCalificacion(matricula, respuestasProblemas, respuestasTeoria) 
   let puntos = 0;
   const detalle = { problemas: {}, teoria: {}, diagnostica: {} };
 
-  // Valor de cada problema: P1-P4 = 20 pts c/u, P5 = 10 pts (total 90)
-  const puntosProblemas = { 1: 20, 2: 20, 3: 20, 4: 20, 5: 10 };
+  // Valor de cada problema: P1 = 10 pts, P2-P5 = 20 pts c/u (total 90)
+  const puntosProblemas = { 1: 10, 2: 20, 3: 20, 4: 20, 5: 20 };
 
   // Determinar problemas correctos y fallidos
   const problemasFallidos = [];
@@ -259,12 +260,13 @@ function calcularCalificacion(matricula, respuestasProblemas, respuestasTeoria) 
       detalle.problemas[i] = {
         puntos: Math.round(puntosObtenidos * 10) / 10,
         correcta: resultado.correcta,
-        recuperacion: !resultado.correcta,
+        recuperacion: resultado.incisosCorrectos === 0,
         valor: puntosProblemas[i],
         incisosCorrectos: resultado.incisosCorrectos,
         totalIncisos: resultado.totalIncisos
       };
-      if (!resultado.correcta) problemasFallidos.push(i);
+      // Solo entra a diagnósticas si fallan TODOS los incisos (0 aciertos)
+      if (resultado.incisosCorrectos === 0) problemasFallidos.push(i);
     } else if (resultado) {
       puntos += puntosProblemas[i];
       detalle.problemas[i] = { puntos: puntosProblemas[i], correcta: true, recuperacion: false };
