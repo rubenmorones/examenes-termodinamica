@@ -209,6 +209,9 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/utils.js"></script>
+    <script src="js/problemas.js"></script>
+    <script src="js/BANCO_PREGUNTAS_TEORIA_28.js"></script>
+    <script src="js/EXAMENES_COMPLETOS_28.js"></script>
 
     <script>
         let problemaActual = 1;
@@ -216,6 +219,7 @@
         let tiempoExtendido = 7; // horas
         let archivoSeleccionado = null;
         let problemaActualSubida = 1;
+        let examenActual = null;
 
         // Variables para guardar respuestas
         let respuestas = {
@@ -230,44 +234,8 @@
             }
         }
 
-        // Problemas (datos simplificados - en producción vienen de EXAMENES_COMPLETOS_28.js)
-        const problemas = {
-            1: {
-                titulo: "Problema 1: Segunda Ley de la Termodinámica",
-                enunciado: "Se realiza un experimento donde se transfieren 5200 J de calor a un sistema...",
-                solucion: "24.82",
-                tolerancia: 0.07,
-                unidad: "J/K"
-            },
-            2: {
-                titulo: "Problema 2: Máquina Térmica",
-                enunciado: "Una máquina térmica opera entre dos depósitos...",
-                solucion: "35.5",
-                tolerancia: 0.07,
-                unidad: "%"
-            },
-            3: {
-                titulo: "Problema 3: Entropía en Compresión",
-                enunciado: "Un gas ideal se comprime isotérmicamente...",
-                solucion: "45.2",
-                tolerancia: 0.07,
-                unidad: "J/K"
-            },
-            4: {
-                titulo: "Problema 4: Throttling",
-                enunciado: "Un fluido se expande a través de una válvula...",
-                solucion: "2.15",
-                tolerancia: 0.07,
-                unidad: "K"
-            },
-            5: {
-                titulo: "Problema 5: Compresión de Agua",
-                enunciado: "Se comprime agua isotérmicamente a 25°C...",
-                solucion: "15.8",
-                tolerancia: 0.07,
-                unidad: "cm³"
-            }
-        };
+        // Problemas - se cargarán del examen real del estudiante
+        let problemas = {};
 
         // Inicialización
         window.addEventListener('load', function() {
@@ -283,19 +251,67 @@
 
                 if (!matAsignada) {
                     // Primera vez: seleccionar aleatoriamente
-                    const otrosEstudiantes = [];
-                    for (let i = 1; i <= 28; i++) {
-                        otrosEstudiantes.push(2000000 + i); // 2001001 a 2001028
-                    }
-                    const numAleatorio = otrosEstudiantes[Math.floor(Math.random() * otrosEstudiantes.length)];
-                    matAsignada = numAleatorio.toString();
+                    matAsignada = '2001001'; // Usar siempre la primera para demostración
                     localStorage.setItem('matriculaProblemas111111', matAsignada);
-                    console.log('🎯 PRIMERA VEZ: Se asignaron problemas de ' + matAsignada + ' al estudiante 111111');
-                } else {
-                    console.log('🔄 SESIÓN RECURRENTE: Usando mismos problemas de ' + matAsignada);
+                    console.log('🎯 DEMO: Se asignaron problemas de ' + matAsignada);
                 }
+                matricula = matAsignada;
+            }
 
-                localStorage.setItem('matriculaParaProblemas', matAsignada);
+            // Cargar examen real del estudiante
+            try {
+                examenActual = generarExamenEstudiante(matricula);
+
+                // Convertir a formato de problemas
+                problemas = {
+                    1: {
+                        titulo: 'Problema 1: ' + examenActual.problemas.problema1.titulo,
+                        enunciado: examenActual.problemas.problema1.enunciado,
+                        solucion: examenActual.problemas.problema1.solucion,
+                        tolerancia: examenActual.problemas.problema1.tolerancia,
+                        unidad: examenActual.problemas.problema1.unidad,
+                        explicacion: examenActual.problemas.problema1.explicacion
+                    },
+                    2: {
+                        titulo: 'Problema 2: ' + examenActual.problemas.problema2.titulo,
+                        enunciado: examenActual.problemas.problema2.enunciado,
+                        solucion: examenActual.problemas.problema2.solucion,
+                        tolerancia: examenActual.problemas.problema2.tolerancia,
+                        unidad: examenActual.problemas.problema2.unidad,
+                        explicacion: examenActual.problemas.problema2.explicacion
+                    },
+                    3: {
+                        titulo: 'Problema 3: ' + examenActual.problemas.problema3.titulo,
+                        enunciado: examenActual.problemas.problema3.enunciado,
+                        solucion: examenActual.problemas.problema3.solucion,
+                        tolerancia: examenActual.problemas.problema3.tolerancia,
+                        unidad: examenActual.problemas.problema3.unidad,
+                        explicacion: examenActual.problemas.problema3.explicacion
+                    },
+                    4: {
+                        titulo: 'Problema 4: ' + examenActual.problemas.problema4.titulo,
+                        enunciado: examenActual.problemas.problema4.enunciado,
+                        solucion: examenActual.problemas.problema4.solucion,
+                        tolerancia: examenActual.problemas.problema4.tolerancia,
+                        unidad: examenActual.problemas.problema4.unidad,
+                        explicacion: examenActual.problemas.problema4.explicacion
+                    },
+                    5: {
+                        titulo: 'Problema 5: ' + examenActual.problemas.problema5.titulo,
+                        enunciado: examenActual.problemas.problema5.enunciado,
+                        solucion: examenActual.problemas.problema5.solucion,
+                        tolerancia: examenActual.problemas.problema5.tolerancia,
+                        unidad: examenActual.problemas.problema5.unidad,
+                        explicacion: examenActual.problemas.problema5.explicacion
+                    }
+                };
+
+                console.log('✅ Examen cargado para matrícula:', matricula);
+            } catch (err) {
+                console.error('Error cargando examen:', err);
+                alert('Error: No se pudo cargar el examen. Intenta de nuevo.');
+                window.location.href = 'index.html';
+                return;
             }
 
             document.getElementById('matriculaDisplay').textContent = 'Matrícula: ' + matricula;

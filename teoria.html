@@ -120,6 +120,9 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/utils.js"></script>
+    <script src="js/problemas.js"></script>
+    <script src="js/BANCO_PREGUNTAS_TEORIA_28.js"></script>
+    <script src="js/EXAMENES_COMPLETOS_28.js"></script>
 
     <script>
         let preguntaActual = 1;
@@ -127,6 +130,8 @@
         let tiempoInicio = null;
         let tiempoExtendido = 7;
         let respuestasTeoria = {};
+        let listaPreguntas = [];
+        let examenActual = null;
 
         // Cargar respuestas guardadas en localStorage
         function cargarRespuestasGuardadas() {
@@ -136,83 +141,35 @@
             }
         }
 
-        // Preguntas de teoría (datos simplificados)
-        const preguntasTeoria = [
-            {
-                numero: 1,
-                tipo: 'teoria',
-                pregunta: '¿Cuál es la formulación correcta de la Segunda Ley en términos de entropía?',
-                opciones: {
-                    a: 'ΔS_universo = ΔS_sistema - ΔS_alrededores siempre',
-                    b: 'ΔS_universo = ΔS_sistema + ΔS_alrededores ≥ 0',
-                    c: 'ΔS_universo = ΔS_sistema + ΔS_alrededores < 0',
-                    d: 'ΔS_universo = 0 para todos los procesos',
-                    e: 'La entropía no tiene límites',
-                    f: 'La entropía solo aplica a líquidos',
-                    g: 'No hay relación entre sistema y alrededores'
-                },
-                correcta: 'b',
-                diagnostica: false
-            },
-            // ... más preguntas (por brevedad aquí solo muestro estructura)
-        ];
-
-        // Preguntas diagnósticas por problema
-        const preguntasDiagnosticas = {
-            1: [
-                {
-                    numero: 'D1.1',
-                    pregunta: 'En este problema, ¿qué indica que el cambio de entropía resultó positivo?',
-                    opciones: {
-                        a: 'Que el proceso fue irreversible',
-                        b: 'Que la temperatura aumentó',
-                        c: 'Que se perdió energía',
-                        d: 'Que la presión cambió',
-                        e: 'Que el volumen disminuyó',
-                        f: 'Que el sistema se enfrió',
-                        g: 'Que no hay cambio'
-                    },
-                    correcta: 'a',
-                    problema: 1
-                },
-                {
-                    numero: 'D1.2',
-                    pregunta: '¿Qué nos indica que la entropía del sistema aumentó?',
-                    opciones: {
-                        a: 'Que el sistema absorbió calor',
-                        b: 'Que la presión es constante',
-                        c: 'Que el volumen disminuyó',
-                        d: 'Que toda la energía se convirtió en trabajo',
-                        e: 'Que la capacidad calorífica es negativa',
-                        f: 'Que el proceso fue adiabático',
-                        g: 'Que no hubo cambio de estado'
-                    },
-                    correcta: 'a',
-                    problema: 1
-                },
-                {
-                    numero: 'D1.3',
-                    pregunta: '¿Qué significa físicamente que la entropía haya aumentado?',
-                    opciones: {
-                        a: 'El sistema se volvió más desordenado',
-                        b: 'La presión aumentó',
-                        c: 'El volumen disminuyó',
-                        d: 'La temperatura bajó',
-                        e: 'El sistema ganó masa',
-                        f: 'Se creó energía',
-                        g: 'Nada cambió fundamentalmente'
-                    },
-                    correcta: 'a',
-                    problema: 1
-                }
-            ],
-            // ... diagnósticas para otros problemas
-        };
+        // Preguntas de teoría - se cargarán del examen real
+        let preguntasTeoria = {};
+        let preguntasDiagnosticas = {};
 
         // Inicialización
         window.addEventListener('load', function() {
-            const matricula = localStorage.getItem('matriculaActual');
+            let matricula = localStorage.getItem('matriculaActual');
             if (!matricula) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Si es 111111, usar la misma matrícula asignada en examen.html
+            if (matricula === '111111') {
+                matricula = localStorage.getItem('matriculaProblemas111111') || '2001001';
+            }
+
+            try {
+                // Cargar examen real
+                examenActual = generarExamenEstudiante(matricula);
+
+                // Convertir preguntas al formato esperado
+                listaPreguntas = examenActual.teoría.preguntas || [];
+                totalPreguntas = listaPreguntas.length;
+
+                console.log('✅ Examen teórico cargado:', totalPreguntas, 'preguntas');
+            } catch (err) {
+                console.error('Error cargando examen:', err);
+                alert('Error: No se pudo cargar las preguntas de teoría');
                 window.location.href = 'index.html';
                 return;
             }
@@ -222,9 +179,6 @@
 
             document.getElementById('matriculaDisplay').textContent = 'Matrícula: ' + matricula;
             cargarDatosEstudiante(matricula);
-
-            // Construir lista de preguntas (teoría + diagnósticas de problemas fallidos)
-            construirListaPreguntas(matricula);
 
             // Mostrar primera pregunta
             mostrarPregunta(1);
@@ -308,15 +262,15 @@
             const porcentaje = (numero / totalPreguntas) * 100;
             document.getElementById('progressBar').style.width = porcentaje + '%';
 
-            // Renderizar pregunta
-            const pregunta = numero <= 10 ? preguntasTeoria[numero - 1] : null;
+            // Obtener pregunta del listado real
+            const pregunta = listaPreguntas[numero - 1];
 
             if (pregunta) {
                 const html = `
                     <div class="pregunta-box">
                         <h3>${pregunta.pregunta}</h3>
                         <div class="opciones">
-                            ${Object.entries(pregunta.opciones).map(([key, valor]) => `
+                            ${Object.entries(pregunta.opciones || {}).map(([key, valor]) => `
                                 <label class="opcion">
                                     <input
                                         type="radio"
