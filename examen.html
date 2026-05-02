@@ -244,11 +244,28 @@
         let problemas = {};
 
         // Inicialización
-        window.addEventListener('load', function() {
+        window.addEventListener('load', async function() {
             let matricula = localStorage.getItem('matriculaActual');
             if (!matricula) {
                 window.location.href = 'index.html';
                 return;
+            }
+
+            // 🔒 BLOQUEO: si ya envió el examen, no permitir reentrada (excepto DEMO 1111111)
+            if (matricula !== '1111111') {
+                try {
+                    const { data: est } = await supabaseClient
+                        .from('estudiantes')
+                        .select('fecha_envio')
+                        .eq('matricula', matricula)
+                        .maybeSingle();
+                    if (est && est.fecha_envio) {
+                        alert('Ya enviaste tu examen el ' + new Date(est.fecha_envio).toLocaleString() + '. No puedes volver a entrar.');
+                        localStorage.removeItem('matriculaActual');
+                        window.location.href = 'index.html';
+                        return;
+                    }
+                } catch (e) { console.warn('Check fecha_envio:', e); }
             }
 
             // Bloqueo: si ya pasó a fase 2, no permitir regresar a problemas

@@ -125,6 +125,15 @@
                     console.log('✓ Estudiante registrado:', matricula);
                 } else {
                     console.log('✓ Estudiante existente:', matricula);
+
+                    // 🔒 BLOQUEO: si ya envió el examen, no puede volver a entrar
+                    // (excepto la matrícula DEMO 1111111 que sí puede repetir para pruebas)
+                    if (data.fecha_envio && matricula !== '1111111') {
+                        mostrarError('Ya enviaste tu examen el ' +
+                            new Date(data.fecha_envio).toLocaleString() +
+                            '. No puedes volver a entrar. Si crees que es un error, contacta al profesor.');
+                        return;
+                    }
                 }
 
                 if (matricula === '1111111') {
