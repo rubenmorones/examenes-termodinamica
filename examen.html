@@ -310,8 +310,12 @@
                 console.log('✅ Examen cargado para matrícula:', matricula);
             } catch (err) {
                 console.error('Error cargando examen:', err);
-                alert('Error: No se pudo cargar el examen. Intenta de nuevo.');
-                window.location.href = 'index.html';
+                alert('ERROR DETALLADO:\n' + err.message + '\n\nDatos disponibles:\n' +
+                    '- problem1Versions: ' + (window.problem1Versions ? 'SÍ ('+window.problem1Versions.length+')' : 'NO') + '\n' +
+                    '- problem5Versions: ' + (window.problem5Versions ? 'SÍ' : 'NO') + '\n' +
+                    '- preguntasTeoria: ' + (window.preguntasTeoria ? 'SÍ' : 'NO') + '\n' +
+                    '- generarExamenEstudiante: ' + (typeof window.generarExamenEstudiante) + '\n' +
+                    '- matrícula usada: ' + matricula);
                 return;
             }
 
