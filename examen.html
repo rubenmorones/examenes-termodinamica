@@ -737,32 +737,51 @@
 
         async function guardarAutomaticamente() {
             const matricula = localStorage.getItem('matriculaActual');
+            let errores = 0;
 
             // Guardar respuestas
             for (let i = 1; i <= 5; i++) {
                 const r = respuestas[i];
                 if (r === undefined || r === null || r === '') continue;
 
+                // Construir payload: incluir respuesta_texto SOLO si es objeto (multi-inciso)
+                const payload = {
+                    matricula: matricula,
+                    problema_id: i,
+                    respuesta_numerica: typeof r === 'object' ? (parseFloat(r.V2) || 0) : parseFloat(r)
+                };
                 if (typeof r === 'object') {
-                    // Respuesta multi-inciso: guardar como JSON-string en respuesta_numerica
-                    // (en respuesta_numerica guardamos NaN o el primer valor; el detalle va en respuesta_texto)
-                    await supabaseClient
-                        .from('respuestas')
-                        .upsert({
-                            matricula: matricula,
-                            problema_id: i,
-                            respuesta_numerica: parseFloat(r.V2) || 0,
-                            respuesta_texto: JSON.stringify(r)
-                        }, { onConflict: 'matricula,problema_id' });
-                } else {
-                    await supabaseClient
-                        .from('respuestas')
-                        .upsert({
-                            matricula: matricula,
-                            problema_id: i,
-                            respuesta_numerica: parseFloat(r)
-                        }, { onConflict: 'matricula,problema_id' });
+                    payload.respuesta_texto = JSON.stringify(r);
                 }
+
+                // 1er intento: upsert con onConflict
+                let { error } = await supabaseClient
+                    .from('respuestas')
+                    .upsert(payload, { onConflict: 'matricula,problema_id' });
+
+                // Fallback 1: si falla por constraint inexistente, intentar upsert sin onConflict
+                if (error) {
+                    console.error('❌ Error guardando P' + i + ' (intento 1):', error);
+                    const r2 = await supabaseClient.from('respuestas').upsert(payload);
+                    error = r2.error;
+                }
+
+                // Fallback 2: si falla por columna respuesta_texto inexistente, reintentar sin ella
+                if (error && payload.respuesta_texto) {
+                    console.error('❌ Error guardando P' + i + ' (intento 2):', error);
+                    const payload2 = { matricula: payload.matricula, problema_id: payload.problema_id, respuesta_numerica: payload.respuesta_numerica };
+                    const r3 = await supabaseClient.from('respuestas').upsert(payload2);
+                    error = r3.error;
+                }
+
+                if (error) {
+                    console.error('❌ Falló P' + i + ' definitivamente:', error);
+                    errores++;
+                }
+            }
+
+            if (errores > 0) {
+                console.warn(`⚠️ ${errores} error(es) al guardar. Revisa la consola.`);
             }
 
             document.getElementById('ultimaGuarda').textContent = 'Última guardada: ' + new Date().toLocaleTimeString();

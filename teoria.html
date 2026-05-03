@@ -390,15 +390,54 @@
         async function guardarAutomaticamente() {
             const matricula = localStorage.getItem('matriculaActual');
 
+            let errores = 0;
             for (const [numero, respuesta] of Object.entries(respuestasTeoria)) {
-                await supabaseClient
+                const numInt = parseInt(numero);
+                const payload = {
+                    matricula: matricula,
+                    pregunta_numero: numInt,
+                    respuesta_seleccionada: respuesta
+                };
+                // Solo incluir 'tipo' si la columna lo soporta (default: teoria)
+                payload.tipo = numInt <= 10 ? 'teoria' : 'diagnostica';
+
+                // 1er intento: upsert con onConflict
+                let { error } = await supabaseClient
                     .from('respuestas_teoria')
-                    .insert([{
-                        matricula: matricula,
-                        tipo: numero <= 10 ? 'teoria' : 'diagnostica',
-                        pregunta_numero: numero,
-                        respuesta_seleccionada: respuesta
+                    .upsert(payload, { onConflict: 'matricula,pregunta_numero' });
+
+                // Fallback 1: upsert sin onConflict
+                if (error) {
+                    console.error('❌ Error guardando teoría #' + numero + ' (intento 1):', error);
+                    const r2 = await supabaseClient.from('respuestas_teoria').upsert(payload);
+                    error = r2.error;
+                }
+
+                // Fallback 2: sin columna 'tipo'
+                if (error) {
+                    console.error('❌ Error guardando teoría #' + numero + ' (intento 2):', error);
+                    const payload2 = { matricula: payload.matricula, pregunta_numero: payload.pregunta_numero, respuesta_seleccionada: payload.respuesta_seleccionada };
+                    const r3 = await supabaseClient.from('respuestas_teoria').upsert(payload2);
+                    error = r3.error;
+                }
+
+                // Fallback 3: insert simple
+                if (error) {
+                    console.error('❌ Error guardando teoría #' + numero + ' (intento 3):', error);
+                    const r4 = await supabaseClient.from('respuestas_teoria').insert([{
+                        matricula: payload.matricula, pregunta_numero: payload.pregunta_numero, respuesta_seleccionada: payload.respuesta_seleccionada
                     }]);
+                    error = r4.error;
+                }
+
+                if (error) {
+                    console.error('❌ Falló teoría #' + numero + ' definitivamente:', error);
+                    errores++;
+                }
+            }
+
+            if (errores > 0) {
+                console.warn(`⚠️ ${errores} error(es) al guardar teoría. Revisa la consola.`);
             }
 
             document.getElementById('ultimaGuarda').textContent = 'Última guardada: ' + new Date().toLocaleTimeString();

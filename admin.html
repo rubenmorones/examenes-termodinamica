@@ -312,45 +312,55 @@
             const estudiantes = estudiantesRes.data || [];
 
             tbody.innerHTML = matriculas.map(mat => {
-                const est = estudiantes.find(e => e.matricula === mat);
+                const est = estudiantes.find(e => String(e.matricula) === String(mat));
 
-                // Reconstruir respuestas
+                // Reconstruir respuestas (matching como string para evitar mismatch numérico)
                 const respProb = {};
-                respuestas.filter(r => r.matricula === mat).forEach(r => {
-                    respProb[r.problema_id] = String(r.respuesta_numerica);
+                respuestas.filter(r => String(r.matricula) === String(mat)).forEach(r => {
+                    if (r.respuesta_texto) {
+                        try { respProb[r.problema_id] = JSON.parse(r.respuesta_texto); }
+                        catch { respProb[r.problema_id] = String(r.respuesta_numerica); }
+                    } else {
+                        respProb[r.problema_id] = String(r.respuesta_numerica);
+                    }
                 });
                 const respTeo = {};
-                teoria.filter(t => t.matricula === mat).forEach(t => {
+                teoria.filter(t => String(t.matricula) === String(mat)).forEach(t => {
                     respTeo[t.pregunta_numero] = t.respuesta_seleccionada;
                 });
 
-                if (Object.keys(respProb).length === 0) {
+                const calificacionGuardada = est && est.calificacion_final != null ? est.calificacion_final : null;
+                const liberada = est?.calificacion_liberada || false;
+                const tieneRespuestas = Object.keys(respProb).length > 0;
+
+                // Caso 1: sin calificación guardada y sin respuestas → guiones
+                if (calificacionGuardada == null && !tieneRespuestas) {
                     return `<tr><td>${mat}</td>${'<td>-</td>'.repeat(9)}<td>-</td></tr>`;
                 }
 
-                // Calcular calificación
-                let calif;
-                try {
-                    calif = window.calcularCalificacion(mat, respProb, respTeo);
-                } catch (err) {
-                    return `<tr><td>${mat}</td><td colspan="10">Error: ${err.message}</td></tr>`;
+                // Calcular detalle si hay respuestas
+                let calif = null;
+                if (tieneRespuestas) {
+                    try { calif = window.calcularCalificacion(mat, respProb, respTeo); }
+                    catch (err) { console.warn('No se pudo recalcular ' + mat + ':', err.message); }
                 }
 
-                const liberada = est?.calificacion_liberada || false;
-                const d = calif.detalle.problemas;
-                const totalTeoria = Object.values(calif.detalle.teoria || {}).reduce((s,v) => s + v.puntos, 0);
-                const totalRecup = Object.values(d).reduce((s,v) => s + (v.puntosRecuperados || 0), 0);
+                const d = calif?.detalle.problemas || {};
+                const cell = (k) => calif ? ((d[k]?.puntos || 0) + (d[k]?.puntosRecuperados || 0)) : '-';
+                const totalTeoria = calif ? Object.values(calif.detalle.teoria || {}).reduce((s,v) => s + v.puntos, 0) : '-';
+                const totalRecup = calif ? Object.values(d).reduce((s,v) => s + (v.puntosRecuperados || 0), 0).toFixed(1) : '-';
+                const totalFinal = calificacionGuardada != null ? calificacionGuardada : (calif ? calif.puntos : '-');
 
                 return `<tr>
                     <td><strong>${mat}</strong></td>
-                    <td>${(d[1]?.puntos || 0) + (d[1]?.puntosRecuperados || 0)}</td>
-                    <td>${(d[2]?.puntos || 0) + (d[2]?.puntosRecuperados || 0)}</td>
-                    <td>${(d[3]?.puntos || 0) + (d[3]?.puntosRecuperados || 0)}</td>
-                    <td>${(d[4]?.puntos || 0) + (d[4]?.puntosRecuperados || 0)}</td>
-                    <td>${(d[5]?.puntos || 0) + (d[5]?.puntosRecuperados || 0)}</td>
+                    <td>${cell(1)}</td>
+                    <td>${cell(2)}</td>
+                    <td>${cell(3)}</td>
+                    <td>${cell(4)}</td>
+                    <td>${cell(5)}</td>
                     <td>${totalTeoria}</td>
-                    <td>${totalRecup.toFixed(1)}</td>
-                    <td><strong>${calif.puntos}</strong></td>
+                    <td>${totalRecup}</td>
+                    <td><strong>${totalFinal}</strong></td>
                     <td><span class="badge ${liberada ? 'badge-released' : 'badge-locked'}">${liberada ? '🔓 Liberada' : '🔒 Privada'}</span></td>
                     <td>
                         <button class="btn-mini ${liberada ? 'btn-orange' : 'btn-blue'}"
