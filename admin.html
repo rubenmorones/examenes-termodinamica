@@ -67,6 +67,7 @@
         <div class="admin-tabs">
             <button class="active" onclick="cambiarTab(event,'progreso')">📊 Progreso en Vivo</button>
             <button onclick="cambiarTab(event,'calificaciones')">🎯 Calificaciones</button>
+            <button onclick="cambiarTab(event,'probatorios')">📎 Probatorios</button>
             <button onclick="cambiarTab(event,'tiempo')">⏱️ Extender Tiempo</button>
             <button onclick="cambiarTab(event,'descargar')">📥 Descargar Excel</button>
             <button onclick="cambiarTab(event,'reset')">🗑️ Reset Alumno</button>
@@ -116,6 +117,24 @@
                         </tr>
                     </thead>
                     <tbody id="tablaCalif"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- TAB: Probatorios -->
+        <section id="tab-probatorios" class="panel-section">
+            <h3>📎 Probatorios subidos por alumno</h3>
+            <p style="color:#aaa;font-size:0.9em;">Clic en cualquier ícono para abrir/descargar el archivo en una pestaña nueva.</p>
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Matrícula</th>
+                            <th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>P5</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaProbatorios"></tbody>
                 </table>
             </div>
         </section>
@@ -223,6 +242,7 @@
             await cargarProgreso();
             await cargarCalificaciones();
             await cargarTiempos();
+            await cargarProbatorios();
         }
 
         // ============================================================
@@ -515,6 +535,49 @@
             a.download = 'respuestas_' + new Date().toISOString().split('T')[0] + '.json';
             a.click();
             URL.revokeObjectURL(url);
+        }
+
+        // ============================================================
+        // PROBATORIOS
+        // ============================================================
+        async function cargarProbatorios() {
+            const matriculas = window.MATRICULAS_ESTUDIANTES;
+            const tbody = document.getElementById('tablaProbatorios');
+            if (!tbody) return;
+            tbody.innerHTML = '<tr><td colspan="7">Cargando...</td></tr>';
+
+            const { data: probs } = await supabaseClient.from('probatorios').select('*');
+            const probatorios = probs || [];
+
+            tbody.innerHTML = matriculas.map(mat => {
+                const archivosDelAlumno = probatorios.filter(p => String(p.matricula) === String(mat));
+
+                // Por cada problema (1-5), buscar el archivo y generar el link público
+                const celdas = [1, 2, 3, 4, 5].map(probId => {
+                    const archivo = archivosDelAlumno.find(p => p.problema_id === probId);
+                    if (!archivo || !archivo.archivo_url) {
+                        return '<td style="color:#666;">—</td>';
+                    }
+                    const { data } = supabaseClient.storage.from('probatorios').getPublicUrl(archivo.archivo_url);
+                    const url = data?.publicUrl || '#';
+                    const ext = (archivo.archivo_url.split('.').pop() || '').toLowerCase();
+                    const icono = ext === 'pdf' ? '📄' : (['jpg','jpeg','png'].includes(ext) ? '🖼️' : '📎');
+                    return `<td><a href="${url}" target="_blank" rel="noopener" style="font-size:1.4em;text-decoration:none;" title="Abrir P${probId} de ${mat}">${icono}</a></td>`;
+                });
+
+                const total = archivosDelAlumno.length;
+                const totalCell = total === 5
+                    ? `<td><span class="badge badge-done">${total}/5</span></td>`
+                    : (total === 0
+                        ? `<td style="color:#666;">${total}/5</td>`
+                        : `<td><span class="badge badge-progress">${total}/5</span></td>`);
+
+                return `<tr>
+                    <td><strong>${mat}</strong></td>
+                    ${celdas.join('')}
+                    ${totalCell}
+                </tr>`;
+            }).join('');
         }
 
         // ============================================================
