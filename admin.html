@@ -474,13 +474,21 @@
             let csv = 'Matricula,P1,P2,P3,P4,P5,Teoria,Recuperacion,Total,Estado,Liberada\n';
 
             matriculas.forEach(mat => {
-                const est = estudiantes.find(e => e.matricula === mat);
+                const est = estudiantes.find(e => String(e.matricula) === String(mat));
+
+                // Reconstruir respuestas (matching como string para evitar mismatch numérico)
+                // y parsear respuesta_texto para problemas multi-inciso (P5)
                 const respProb = {};
-                respuestas.filter(r => r.matricula === mat).forEach(r => {
-                    respProb[r.problema_id] = String(r.respuesta_numerica);
+                respuestas.filter(r => String(r.matricula) === String(mat)).forEach(r => {
+                    if (r.respuesta_texto) {
+                        try { respProb[r.problema_id] = JSON.parse(r.respuesta_texto); }
+                        catch { respProb[r.problema_id] = String(r.respuesta_numerica); }
+                    } else {
+                        respProb[r.problema_id] = String(r.respuesta_numerica);
+                    }
                 });
                 const respTeo = {};
-                teoria.filter(t => t.matricula === mat).forEach(t => {
+                teoria.filter(t => String(t.matricula) === String(mat)).forEach(t => {
                     respTeo[t.pregunta_numero] = t.respuesta_seleccionada;
                 });
 
@@ -496,8 +504,10 @@
                     const totalRecup = Object.values(d).reduce((s,v) => s + (v.puntosRecuperados || 0), 0);
                     const liberada = est?.calificacion_liberada ? 'Sí' : 'No';
                     const estado = est?.calificacion_final != null ? 'Completado' : 'En progreso';
+                    // Usar calificación guardada en BD si existe (consistente con la tabla en pantalla)
+                    const totalFinal = est?.calificacion_final != null ? est.calificacion_final : calif.puntos;
 
-                    csv += `${mat},${(d[1]?.puntos||0)+(d[1]?.puntosRecuperados||0)},${(d[2]?.puntos||0)+(d[2]?.puntosRecuperados||0)},${(d[3]?.puntos||0)+(d[3]?.puntosRecuperados||0)},${(d[4]?.puntos||0)+(d[4]?.puntosRecuperados||0)},${(d[5]?.puntos||0)+(d[5]?.puntosRecuperados||0)},${totalTeoria},${totalRecup.toFixed(1)},${calif.puntos},${estado},${liberada}\n`;
+                    csv += `${mat},${(d[1]?.puntos||0)+(d[1]?.puntosRecuperados||0)},${(d[2]?.puntos||0)+(d[2]?.puntosRecuperados||0)},${(d[3]?.puntos||0)+(d[3]?.puntosRecuperados||0)},${(d[4]?.puntos||0)+(d[4]?.puntosRecuperados||0)},${(d[5]?.puntos||0)+(d[5]?.puntosRecuperados||0)},${totalTeoria},${totalRecup.toFixed(1)},${totalFinal},${estado},${liberada}\n`;
                 } catch (err) {
                     csv += `${mat},Error,,,,,,,0,Error,No\n`;
                 }
