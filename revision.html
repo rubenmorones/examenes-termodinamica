@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retroalimentación - Termodinámica</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .revision-container {
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        .revision-header {
+            background: #1e3a8a;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .calif-box {
+            background: white;
+            color: #1e3a8a;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+        .seccion {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .seccion-titulo {
+            background: #f3f4f6;
+            padding: 12px 20px;
+            margin: 0;
+            border-bottom: 1px solid #ddd;
+            font-size: 1.2em;
+        }
+        .seccion-body {
+            padding: 20px;
+        }
+        .problema-card {
+            border-left: 4px solid #ccc;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            background: #fafafa;
+            border-radius: 4px;
+        }
+        .problema-card.correcto { border-left-color: #16a34a; }
+        .problema-card.incorrecto { border-left-color: #dc2626; }
+        .problema-card.parcial { border-left-color: #f59e0b; }
+        .problema-titulo {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .enunciado {
+            background: white;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+        .respuestas-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .respuesta-box {
+            padding: 10px;
+            border-radius: 4px;
+            background: white;
+            border: 1px solid #e5e7eb;
+        }
+        .respuesta-box.tuya { border-left: 3px solid #6366f1; }
+        .respuesta-box.correcta { border-left: 3px solid #16a34a; }
+        .respuesta-label {
+            font-size: 0.85em;
+            color: #6b7280;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        .respuesta-valor {
+            font-size: 1.05em;
+            font-family: 'Courier New', monospace;
+        }
+        .explicacion {
+            background: #eff6ff;
+            border-left: 3px solid #3b82f6;
+            padding: 12px 15px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+        .badge-resultado {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: bold;
+            color: white;
+        }
+        .badge-correcto { background: #16a34a; }
+        .badge-incorrecto { background: #dc2626; }
+        .badge-parcial { background: #f59e0b; }
+        .pregunta-card {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .pregunta-card:last-child { border-bottom: none; }
+        .opciones-list {
+            list-style: none;
+            padding: 0;
+            margin: 8px 0;
+        }
+        .opciones-list li {
+            padding: 6px 10px;
+            margin-bottom: 4px;
+            border-radius: 4px;
+            background: #f9fafb;
+        }
+        .opciones-list li.tu-respuesta-correcta {
+            background: #dcfce7;
+            border-left: 3px solid #16a34a;
+        }
+        .opciones-list li.tu-respuesta-incorrecta {
+            background: #fee2e2;
+            border-left: 3px solid #dc2626;
+            text-decoration: line-through;
+        }
+        .opciones-list li.correcta-no-elegida {
+            background: #dcfce7;
+            border-left: 3px solid #16a34a;
+            font-weight: bold;
+        }
+        .opcion-letra {
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        .explicacion-teoria {
+            background: #eff6ff;
+            border-left: 3px solid #3b82f6;
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin-top: 8px;
+            font-size: 0.9em;
+        }
+        .login-box-rev {
+            max-width: 500px;
+            margin: 80px auto;
+            padding: 40px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .login-box-rev h2 { color: #1e3a8a; }
+        .input-matricula {
+            width: 100%;
+            padding: 12px;
+            font-size: 1.1em;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            margin: 15px 0;
+            box-sizing: border-box;
+        }
+        .btn-revision {
+            background: #1e3a8a;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1em;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+        }
+        .btn-revision:hover { background: #1e40af; }
+        .mensaje-bloqueo {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 20px;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+        .mensaje-error {
+            background: #fee2e2;
+            border-left: 4px solid #dc2626;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+            color: #991b1b;
+        }
+        .resumen-puntos {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .resumen-puntos > div {
+            background: #f3f4f6;
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .resumen-puntos .label {
+            font-size: 0.8em;
+            color: #6b7280;
+        }
+        .resumen-puntos .valor {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #1e3a8a;
+        }
+        @media (max-width: 700px) {
+            .respuestas-grid { grid-template-columns: 1fr; }
+            .resumen-puntos { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- PANTALLA DE LOGIN -->
+    <div id="loginScreen" class="login-box-rev">
+        <h2>📋 Retroalimentación del Examen</h2>
+        <p>Ingresa tu matrícula para revisar tu examen y ver las soluciones.</p>
+        <input
+            type="text"
+            id="matriculaInput"
+            class="input-matricula"
+            placeholder="Ej: 2104872"
+            maxlength="7"
+        >
+        <button class="btn-revision" onclick="cargarRevision()">Ver mi retroalimentación</button>
+        <div id="mensajeError" style="display:none;"></div>
+    </div>
+
+    <!-- CONTENIDO DE REVISIÓN -->
+    <div id="revisionScreen" class="revision-container" style="display:none;">
+        <div class="revision-header">
+            <div>
+                <h2 style="margin:0;">📋 Retroalimentación</h2>
+                <p style="margin:5px 0 0 0;" id="matriculaShow"></p>
+            </div>
+            <div class="calif-box">
+                <span id="califShow">--</span> <small style="font-size:0.6em;">/ 100</small>
+            </div>
+        </div>
+
+        <div class="seccion">
+            <h3 class="seccion-titulo">Resumen de Problemas</h3>
+            <div class="seccion-body">
+                <div class="resumen-puntos" id="resumenProblemas"></div>
+            </div>
+        </div>
+
+        <div class="seccion">
+            <h3 class="seccion-titulo">📐 Problemas (con solución paso a paso)</h3>
+            <div class="seccion-body" id="contenedorProblemas"></div>
+        </div>
+
+        <div class="seccion">
+            <h3 class="seccion-titulo">📚 Preguntas de Teoría</h3>
+            <div class="seccion-body" id="contenedorTeoria"></div>
+        </div>
+
+        <div class="seccion" id="seccionDiagnosticas" style="display:none;">
+            <h3 class="seccion-titulo">🔍 Preguntas Diagnósticas (recuperación)</h3>
+            <div class="seccion-body" id="contenedorDiagnosticas"></div>
+        </div>
+
+        <div style="text-align:center; margin-top:30px; color:#6b7280;">
+            <p>Esta retroalimentación es para tu estudio personal. Si tienes dudas, contacta a tu profesor.</p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/matriculas-estudiantes.js?v=6"></script>
+    <script src="js/problema1-real.js?v=6"></script>
+    <script src="js/problemas.js?v=6"></script>
+    <script src="js/BANCO_PREGUNTAS_TEORIA_28.js?v=6"></script>
+    <script src="js/preguntas-diagnosticas.js?v=6"></script>
+    <script src="js/exam-generator.js?v=6"></script>
+
+    <script>
+        document.getElementById('matriculaInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') cargarRevision();
+        });
+
+        function mostrarError(msg) {
+            const d = document.getElementById('mensajeError');
+            d.innerHTML = '<div class="mensaje-error">' + msg + '</div>';
+            d.style.display = 'block';
+        }
+
+        function letraOpcion(o) {
+            return typeof o === 'string' ? o.toLowerCase() : String(o).toLowerCase();
+        }
+
+        async function cargarRevision() {
+            const matricula = document.getElementById('matriculaInput').value.trim();
+            document.getElementById('mensajeError').style.display = 'none';
+
+            if (!/^\d{7}$/.test(matricula)) {
+                mostrarError('La matrícula debe tener 7 dígitos.');
+                return;
+            }
+            if (!window.esMatriculaValida(matricula)) {
+                mostrarError('Matrícula no registrada. Verifica con tu profesor.');
+                return;
+            }
+
+            // Consultar estudiante (saber si calificación está liberada)
+            const { data: estudiante, error: errEst } = await supabaseClient
+                .from('estudiantes')
+                .select('*')
+                .eq('matricula', matricula)
+                .maybeSingle();
+
+            if (errEst) {
+                mostrarError('Error de conexión: ' + errEst.message);
+                return;
+            }
+            if (!estudiante) {
+                mostrarError('No se encontró registro para esta matrícula.');
+                return;
+            }
+            if (!estudiante.calificacion_liberada) {
+                mostrarError('🔒 La retroalimentación aún no está disponible. Tu profesor la liberará cuando todos terminen.');
+                return;
+            }
+            if (estudiante.calificacion_final == null) {
+                mostrarError('Aún no se ha calculado tu calificación. Espera a que tu profesor la procese.');
+                return;
+            }
+
+            // Cargar respuestas del estudiante
+            const [respRes, respTeoriaRes] = await Promise.all([
+                supabaseClient.from('respuestas').select('*').eq('matricula', matricula),
+                supabaseClient.from('respuestas_teoria').select('*').eq('matricula', matricula)
+            ]);
+
+            const respuestasProblemas = {};
+            (respRes.data || []).forEach(r => {
+                respuestasProblemas[r.problema_id] = r.respuesta_texto
+                    ? JSON.parse(r.respuesta_texto)
+                    : r.respuesta_numerica;
+            });
+
+            const respuestasTeoria = {};
+            (respTeoriaRes.data || []).forEach(r => {
+                respuestasTeoria[r.pregunta_numero] = r.respuesta_seleccionada;
+            });
+
+            // Generar examen del estudiante
+            const examen = window.generarExamenEstudiante(matricula);
+
+            // Mostrar pantalla de revisión
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('revisionScreen').style.display = 'block';
+            document.getElementById('matriculaShow').textContent = 'Matrícula: ' + matricula;
+            document.getElementById('califShow').textContent = estudiante.calificacion_final;
+
+            renderProblemas(examen, respuestasProblemas);
+            renderTeoriaYDiagnosticas(matricula, examen, respuestasProblemas, respuestasTeoria);
+        }
+
+        function evaluarProblema(numero, respuesta, prob) {
+            const resultado = window.validarRespuestaProblema(respuesta, prob.solucion, prob.tolerancia);
+            if (typeof resultado === 'object') {
+                if (resultado.correcta) return { tipo: 'correcto', texto: 'Correcto (' + resultado.incisosCorrectos + '/' + resultado.totalIncisos + ')' };
+                if (resultado.incisosCorrectos > 0) return { tipo: 'parcial', texto: 'Parcial (' + resultado.incisosCorrectos + '/' + resultado.totalIncisos + ')' };
+                return { tipo: 'incorrecto', texto: 'Incorrecto (0/' + resultado.totalIncisos + ')' };
+            }
+            return resultado
+                ? { tipo: 'correcto', texto: '✓ Correcto' }
+                : { tipo: 'incorrecto', texto: '✗ Incorrecto' };
+        }
+
+        function formatearRespuesta(r, unidad) {
+            if (r == null || r === '') return '<em style="color:#9ca3af;">Sin respuesta</em>';
+            if (typeof r === 'object') {
+                return Object.entries(r).map(([k, v]) => `<strong>${k}:</strong> ${v}`).join(' &nbsp;|&nbsp; ');
+            }
+            return r + (unidad && unidad !== 'múltiple' ? ' ' + unidad : '');
+        }
+
+        function formatearSolucion(prob) {
+            if (typeof prob.solucion === 'object') {
+                return Object.entries(prob.solucion).map(([k, v]) => `<strong>${k}:</strong> ${v}`).join(' &nbsp;|&nbsp; ');
+            }
+            return prob.solucion + (prob.unidad && prob.unidad !== 'múltiple' ? ' ' + prob.unidad : '');
+        }
+
+        function renderProblemas(examen, respuestas) {
+            const cont = document.getElementById('contenedorProblemas');
+            const resumen = document.getElementById('resumenProblemas');
+            const valoresProb = { 1: 10, 2: 20, 3: 20, 4: 20, 5: 20 };
+            cont.innerHTML = '';
+            resumen.innerHTML = '';
+
+            for (let i = 1; i <= 5; i++) {
+                const prob = examen.problemas['problema' + i];
+                const resp = respuestas[i];
+                const evalRes = evaluarProblema(i, resp, prob);
+
+                // Resumen card
+                resumen.innerHTML += `
+                    <div>
+                        <div class="label">P${i}</div>
+                        <div class="valor">${valoresProb[i]}pts</div>
+                        <div style="font-size:0.75em; color:${evalRes.tipo === 'correcto' ? '#16a34a' : evalRes.tipo === 'parcial' ? '#f59e0b' : '#dc2626'};">
+                            ${evalRes.texto}
+                        </div>
+                    </div>
+                `;
+
+                // Tarjeta de problema
+                cont.innerHTML += `
+                    <div class="problema-card ${evalRes.tipo}">
+                        <div class="problema-titulo">
+                            <span>Problema ${i}: ${prob.titulo}</span>
+                            <span class="badge-resultado badge-${evalRes.tipo}">${evalRes.texto}</span>
+                        </div>
+                        <div class="enunciado"><strong>Enunciado:</strong><br>${prob.enunciado}</div>
+                        <div class="respuestas-grid">
+                            <div class="respuesta-box tuya">
+                                <div class="respuesta-label">Tu respuesta</div>
+                                <div class="respuesta-valor">${formatearRespuesta(resp, prob.unidad)}</div>
+                            </div>
+                            <div class="respuesta-box correcta">
+                                <div class="respuesta-label">Respuesta correcta</div>
+                                <div class="respuesta-valor">${formatearSolucion(prob)}</div>
+                            </div>
+                        </div>
+                        <div><strong>Solución paso a paso:</strong></div>
+                        <div class="explicacion">${prob.explicacion || 'Sin explicación disponible.'}</div>
+                    </div>
+                `;
+            }
+        }
+
+        function renderTeoriaYDiagnosticas(matricula, examen, respuestasProblemas, respuestasTeoria) {
+            // Determinar problemas fallidos para reconstruir lista de fase 2
+            const fallidos = window.obtenerProblemasFallidos(matricula, respuestasProblemas);
+            const lista = window.construirPreguntasFase2(matricula, fallidos);
+
+            const contTeoria = document.getElementById('contenedorTeoria');
+            const contDiag = document.getElementById('contenedorDiagnosticas');
+            contTeoria.innerHTML = '';
+            contDiag.innerHTML = '';
+
+            let tieneDiagnosticas = false;
+
+            lista.forEach((p, idx) => {
+                const numUI = idx + 1;
+                const respEst = respuestasTeoria[numUI];
+                const correcta = p.correcta;
+                const acertó = respEst === correcta;
+
+                let opcionesHTML = '<ul class="opciones-list">';
+                Object.entries(p.opciones).forEach(([letra, texto]) => {
+                    let clase = '';
+                    if (letra === respEst && acertó) clase = 'tu-respuesta-correcta';
+                    else if (letra === respEst && !acertó) clase = 'tu-respuesta-incorrecta';
+                    else if (letra === correcta) clase = 'correcta-no-elegida';
+                    opcionesHTML += `<li class="${clase}"><span class="opcion-letra">${letra})</span> ${texto}</li>`;
+                });
+                opcionesHTML += '</ul>';
+
+                if (p.tipo === 'teoria') {
+                    // Buscar explicación en el banco de teoría
+                    let explicacionTeoria = '';
+                    const matriculasTeoria = Object.keys(window.preguntasTeoria);
+                    const preguntaEncontrada = matriculasTeoria.map(m => window.preguntasTeoria[m]).find(pt => pt.pregunta === p.pregunta);
+                    if (preguntaEncontrada && preguntaEncontrada.explicacion) {
+                        explicacionTeoria = `<div class="explicacion-teoria">💡 <strong>Explicación:</strong> ${preguntaEncontrada.explicacion}</div>`;
+                    }
+
+                    const indicadorRespuesta = respEst
+                        ? `<span style="color:${acertó ? '#16a34a' : '#dc2626'}; font-weight:bold; font-size:0.9em;">${acertó ? '✓ Tu respuesta: ' + respEst + ')' : '✗ Tu respuesta: ' + respEst + ') — Correcta: ' + correcta + ')'}</span>`
+                        : `<span style="color:#9ca3af; font-size:0.9em;">Sin respuesta — Correcta: ${correcta})</span>`;
+
+                    contTeoria.innerHTML += `
+                        <div class="pregunta-card">
+                            <div style="margin-bottom:8px;"><strong>Pregunta ${numUI}.</strong> ${p.pregunta}</div>
+                            ${opcionesHTML}
+                            <div>${indicadorRespuesta}</div>
+                            ${explicacionTeoria}
+                        </div>
+                    `;
+                } else if (p.tipo === 'diagnostica') {
+                    tieneDiagnosticas = true;
+                    const indicadorRespuesta = respEst
+                        ? `<span style="color:${acertó ? '#16a34a' : '#dc2626'}; font-weight:bold; font-size:0.9em;">${acertó ? '✓ Tu respuesta: ' + respEst + ')' : '✗ Tu respuesta: ' + respEst + ') — Correcta: ' + correcta + ')'}</span>`
+                        : `<span style="color:#9ca3af; font-size:0.9em;">Sin respuesta — Correcta: ${correcta})</span>`;
+
+                    contDiag.innerHTML += `
+                        <div class="pregunta-card">
+                            <div style="margin-bottom:8px;">
+                                <strong>Diagnóstica (Problema ${p.problema}).</strong>
+                                <span style="font-size:0.85em; color:#6b7280;">Pregunta ${numUI} del examen</span>
+                            </div>
+                            <div style="margin-bottom:8px;">${p.pregunta}</div>
+                            ${opcionesHTML}
+                            <div>${indicadorRespuesta}</div>
+                        </div>
+                    `;
+                }
+            });
+
+            document.getElementById('seccionDiagnosticas').style.display = tieneDiagnosticas ? 'block' : 'none';
+        }
+    </script>
+</body>
+</html>
