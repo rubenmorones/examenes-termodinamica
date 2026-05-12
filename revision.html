@@ -37,7 +37,9 @@
             font-size: 1.5em;
             font-weight: bold;
         }
-        .seccion {
+        /* Override del CSS global que tiene .seccion { display: none; } */
+        #revisionScreen .seccion {
+            display: block;
             background: white;
             border: 2px solid #374151;
             border-radius: 8px;
